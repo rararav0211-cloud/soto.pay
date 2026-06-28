@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>桑都ペイ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="content-area">
+  <header class="top-bar">
+    <span class="logo-text">桑都ペイ</span>
+    <button class="notification-btn" aria-label="通知">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+    <section class="balance-card">
+      <div class="card-label">使用可能金額</div>
+      <div class="card-amount">
+        <span class="amount-value">4,000</span>
+        <span class="amount-unit">円</span>
+      </div>
+      <div class="card-actions">
+        <button class="action-btn primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M2 10h20"/>
+          </svg>
+          支払う
+        </button>
+        <button class="action-btn secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12l7-7 7 7"/>
+          </svg>
+          チャージ
+        </button>
+        <button class="action-btn secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          取引履歴
+        </button>
+      </div>
+    </section>
+
+    <section class="services">
+      <div class="service-item">
+        <div class="service-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <span>加盟店一覧</span>
+      </div>
+      <div class="service-item">
+        <div class="service-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+            <line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+        </div>
+        <span>クーポン</span>
+      </div>
+      <div class="service-item">
+        <div class="service-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <span>アンケート</span>
+      </div>
+      <div class="service-item">
+        <div class="service-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 12 20 22 4 22 4 12"/>
+            <rect x="2" y="7" width="20" height="5"/>
+            <line x1="12" y1="22" x2="12" y2="7"/>
+            <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+          </svg>
+        </div>
+        <span>ギフトコード</span>
+      </div>
+    </section>
+
+    <section class="reserve">
+      <h2 class="reserve-title">お店を予約</h2>
+      <div class="reserve-buttons">
+        <button class="reserve-btn">
+          <svg class="reserve-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+            <path d="M7 2v20"/>
+            <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
+          </svg>
+          食べる
+        </button>
+        <button class="reserve-btn">
+          <svg class="reserve-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 4v16"/>
+            <path d="M2 8h18a2 2 0 0 1 2 2v10"/>
+            <path d="M2 17h20"/>
+            <path d="M6 8v9"/>
+          </svg>
+          泊まる
+        </button>
+        <button class="reserve-btn">
+          <svg class="reserve-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          体験する
+        </button>
+      </div>
+    </section>
+
+    <section class="coupon">
+      <div class="coupon-header">
+        <h2>おトクなクーポン</h2>
+        <a href="#" class="news-more">すべて見る</a>
+      </div>
+      <div class="coupon-carousel">
+        <div class="coupon-card">
+          <p class="coupon-name">高尾山ロープウェイ</p>
+          <p class="coupon-rate"><span>10</span>%付与</p>
+          <button class="coupon-btn">獲得する</button>
+        </div>
+        <div class="coupon-card">
+          <p class="coupon-name">三井アウトレットパーク多摩南大沢</p>
+          <p class="coupon-rate"><span>5</span>%付与</p>
+          <button class="coupon-btn">獲得する</button>
+        </div>
+        <div class="coupon-card">
+          <p class="coupon-name">毎日サウナ</p>
+          <p class="coupon-rate"><span>5</span>%付与</p>
+          <button class="coupon-btn">獲得する</button>
+        </div>
+        <div class="coupon-card">
+          <p class="coupon-name">セレオ八王子</p>
+          <p class="coupon-rate"><span>5</span>%付与</p>
+          <button class="coupon-btn">獲得する</button>
+        </div>
+        <div class="coupon-card">
+          <p class="coupon-name">野猿二郎</p>
+          <p class="coupon-rate"><span>5</span>%付与</p>
+          <button class="coupon-btn">獲得する</button>
+        </div>
+        <div class="coupon-card">
+          <p class="coupon-name">八王子バス一日パス</p>
+          <p class="coupon-rate"><span>5</span>%付与</p>
+          <button class="coupon-btn">獲得する</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="news">
+      <div class="news-header">
+        <h2>お知らせ</h2>
+        <a href="#" class="news-more">すべて見る</a>
+      </div>
+      <div class="news-carousel">
+        <a href="#" class="news-card">
+          <div class="news-card-img">
+            <img src="サウナ.webp" alt="高尾山周辺のサウナ施設">
+          </div>
+          <div class="news-card-body">
+            <span class="news-tag sauna">サ活</span>
+            <p class="news-card-title">高尾山周辺のサウナ施設</p>
+          </div>
+        </a>
+        <a href="#" class="news-card">
+          <div class="news-card-img">
+            <img src="カフェ.webp" alt="自然を楽しめる八王子のカフェ五選">
+          </div>
+          <div class="news-card-body">
+            <span class="news-tag cafe">カフェ巡り</span>
+            <p class="news-card-title">自然を楽しめる八王子のカフェ五選</p>
+          </div>
+        </a>
+        <a href="#" class="news-card">
+          <div class="news-card-img">
+            <img src="ラーメン.webp" alt="八王子ラーメンフェスティバル">
+          </div>
+          <div class="news-card-body">
+            <span class="news-tag event">イベント</span>
+            <p class="news-card-title">【ポイント付与】八王子ラーメンフェスティバル</p>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+  </div><!-- /.content-area -->
+
+  <nav class="bottom-nav">
+    <span class="sidebar-logo">桑都ペイ</span>
+    <button class="nav-item active">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>ホーム</span>
+    </button>
+    <button class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <span>近くのお店</span>
+    </button>
+    <button class="nav-item pay-nav">
+      <div class="pay-circle">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
+      </div>
+      <span>支払う</span>
+    </button>
+    <button class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>アカウント</span>
+    </button>
+  </nav>
+<script src="script.js"></script>
+</body>
+</html>
