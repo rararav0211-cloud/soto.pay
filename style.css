@@ -15,6 +15,12 @@
   --shadow-card: 0 4px 20px rgba(45, 134, 83, 0.18);
 }
 
+/* 全体 */
+
+[hidden] {
+  display: none !important;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -22,7 +28,7 @@
 }
 
 html {
-  background: var(--white);
+  background: var(--gray-200);
   overscroll-behavior-y: auto;
 }
 
@@ -43,7 +49,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 54px 20px;
+  padding:54px 20px 14px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -57,12 +63,35 @@ body {
 }
 
 .notification-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   background: none;
   border: none;
   color: var(--white);
   cursor: pointer;
-  padding: 4px;
   opacity: 0.9;
+}
+
+/* ベルマークの未読の数 */
+.notice-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  border: 2px solid var(--green-primary);
+  background: #E53935;
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
 }
 
 /* ── 残高カード ── */
@@ -87,7 +116,23 @@ body {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
+}
+
+.card-points {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.card-points .points-value {
+  font-size: 15px;
+  font-weight: 900;
+  margin: 0 2px;
 }
 
 .amount-value {
@@ -143,7 +188,7 @@ body {
 /* ── サービス一覧 ── */
 .services {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin: 16px 16px 0;
   background: var(--white);
@@ -292,14 +337,14 @@ body {
   min-height: 34px;
 }
 
-.coupon-rate {
+.coupon-discount {
   font-size: 12px;
   font-weight: 700;
   color: var(--green-primary);
   line-height: 1;
 }
 
-.coupon-rate span {
+.coupon-discount span {
   font-size: 32px;
   font-weight: 900;
   letter-spacing: -0.02em;
@@ -324,29 +369,13 @@ body {
   transform: scale(0.97);
 }
 
-/* ── ニュース ── */
-.news {
-  margin: 16px 16px 0;
-  background: var(--white);
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.coupon-btn.coupon-btn-clicked {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
 }
 
-.news-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--gray-200);
-}
-
-.news-header h2 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
+/* 「すべて見る」リンク */
 .news-more {
   font-size: 12px;
   color: var(--green-primary);
@@ -354,85 +383,7 @@ body {
   font-weight: 500;
 }
 
-.news-carousel {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  padding: 4px 16px 16px;
-  scrollbar-width: none;
-}
-
-.news-carousel::-webkit-scrollbar {
-  display: none;
-}
-
-.news-card {
-  flex-shrink: 0;
-  width: 200px;
-  scroll-snap-align: start;
-  background: var(--white);
-  border-radius: 14px;
-  overflow: hidden;
-  text-decoration: none;
-  border: 1px solid var(--gray-200);
-  transition: transform 0.15s;
-}
-
-.news-card:active {
-  transform: scale(0.97);
-}
-
-.news-card-img {
-  height: 100px;
-  overflow: hidden;
-}
-
-.news-card-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.news-card-body {
-  padding: 10px 12px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.news-tag {
-  align-self: flex-start;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 20px;
-  letter-spacing: 0.02em;
-}
-
-.news-tag.sauna { background: #E3F2FD; color: #1565C0; }
-.news-tag.cafe  { background: #FFF3E0; color: #E65100; }
-.news-tag.event { background: #FCE4EC; color: #C62828; }
-
-.news-card-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-
-/* ── ボトムナビ（モバイル） ── */
-.sidebar-logo {
-  display: none;
-}
-
-.content-area {
-  display: contents;
-}
-
+/* ── ボトムナビ ── */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -486,136 +437,1631 @@ body {
   box-shadow: 0 4px 14px rgba(45, 134, 83, 0.4);
   border: 3px solid var(--white);
 }
+/* リンクで作ったボタンの下線を消す */
+a.service-item,
+a.nav-item {
+  text-decoration: none;
+}
 
 /* ════════════════════════════
-   PC レイアウト (768px以上)
+   クーポン一覧ページ
    ════════════════════════════ */
-@media (min-width: 768px) {
+.sub-bar {
+  padding: 54px 12px 14px;
+}
 
-  body {
-    max-width: none;
-    margin: 0;
-    padding-bottom: 0;
-    display: flex;
-    flex-direction: row;
-    min-height: 100vh;
-  }
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--white);
+}
 
-  /* サイドバー */
-  .bottom-nav {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 220px;
-    height: 100vh;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    padding: 0 0 24px;
-    border-top: none;
-    border-right: 1px solid var(--gray-200);
-    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
-    transform: none;
-    max-width: none;
-    gap: 4px;
-  }
+.page-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--white);
+}
 
-  .sidebar-logo {
-    display: block;
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--green-primary);
-    letter-spacing: 0.05em;
-    padding: 28px 24px 20px;
-    border-bottom: 1px solid var(--gray-200);
-    margin-bottom: 12px;
-  }
+/* 獲得状況の切り替え（カテゴリと区別するためセグメント型） */
+.coupon-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 12px 16px 0;
+  padding: 4px;
+  background: var(--gray-200);
+  border-radius: 12px;
+}
 
-  .nav-item {
-    flex: none;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    font-size: 14px;
-    padding: 12px 20px;
-    border-radius: 12px;
-    margin: 0 12px;
-    width: auto;
-  }
+.coupon-tab {
+  flex: 1;
+  padding: 7px 0;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
 
-  .nav-item.pay-nav {
-    margin-top: 0;
-    margin: 8px 12px;
-    background: linear-gradient(135deg, var(--green-primary), var(--green-light));
-    color: var(--white);
-    border-radius: 14px;
-  }
+.coupon-tab.active {
+  background: var(--white);
+  color: var(--green-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
 
-  .pay-circle {
-    display: none;
-  }
+/* 縦並びのクーポン */
+.coupon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 16px 0;
+}
 
-  .nav-item.pay-nav svg {
-    stroke: white;
-  }
+.coupon-card.coupon-row {
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
 
-  /* コンテンツエリア */
-  .content-area {
-    display: block;
-    margin-left: 220px;
-    flex: 1;
-    min-height: 100vh;
-  }
+.coupon-row .coupon-discount {
+  flex-shrink: 0;
+  width: 92px;
+  text-align: center;
+}
 
-  .top-bar {
-    padding: 16px 24px;
-    position: sticky;
-  }
+.coupon-row .coupon-discount span {
+  font-size: 26px;
+}
 
-  .logo-text {
-    display: none;
-  }
+.coupon-row .coupon-name {
+  flex: 1;
+  min-height: 0;
+  font-size: 14px;
+}
 
-  /* メインコンテンツをグリッドに */
-  main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 20px 24px 32px;
-    max-width: 900px;
-  }
+.coupon-row .coupon-btn {
+  flex-shrink: 0;
+  width: 84px;
+}
 
-  .balance-card {
-    grid-column: 1 / -1;
-    margin: 0;
-  }
+.coupon-empty {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-400);
+}
 
-  .services {
-    margin: 0;
-    grid-template-columns: repeat(4, 1fr);
-  }
+/* カテゴリ・エリアのボタン（横にスクロールできる） */
+.category-chips,
+.area-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 16px 16px 0;
+  scrollbar-width: none;
+}
 
-  .reserve {
-    margin: 0;
-  }
+.category-chips::-webkit-scrollbar,
+.area-chips::-webkit-scrollbar {
+  display: none;
+}
 
-  .coupon {
-    grid-column: 1 / -1;
-    margin: 0;
-  }
+.category-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  background: var(--green-pale);
+  border: none;
+  border-radius: 20px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-dark);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
 
-  .news {
-    grid-column: 1 / -1;
-    margin: 0;
-  }
+.category-chip.active {
+  background: var(--green-dark);
+  color: var(--white);
+}
 
-  /* ニュースカードをPC向けに拡大 */
-  .news-card {
-    width: 260px;
-  }
+/* 一覧カードの店名とカテゴリ */
+.coupon-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
 
-  .news-card-img {
-    height: 150px;
-  }
+.coupon-category {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green-dark);
+  background: var(--white);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ════════════════════════════
+   回遊クーポン
+   ════════════════════════════ */
+
+/* 案内バナー */
+.tour-banner {
+  margin: 14px 16px 0;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #FFF7E6, #FFEFD1);
+  border: 1px solid #F5D9A3;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tour-banner-page {
+  margin-top: 16px;
+}
+
+.tour-banner.is-active {
+  background: linear-gradient(135deg, var(--green-primary), var(--green-light));
+  border-color: transparent;
+  color: var(--white);
+}
+
+.tour-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.tour-text {
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.tour-remaining {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tour-countdown {
+  font-size: 18px;
+  font-weight: 900;
+  margin-left: 2px;
+}
+
+.tour-demo-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 14px;
+  background: #E08A00;
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tour-demo-btn:active {
+  transform: scale(0.97);
+}
+
+/* 回遊クーポンのカード */
+.coupon-card.is-tour {
+  background: #FFF7E6;
+  border-color: #E08A00;
+}
+
+.coupon-card.is-tour .coupon-discount {
+  color: #C06F00;
+}
+
+.coupon-card.is-tour .coupon-btn {
+  background: #E08A00;
+}
+
+.coupon-card.is-inactive .coupon-name,
+.coupon-card.is-inactive .coupon-discount {
+  opacity: 0.55;
+}
+
+.coupon-badge {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--white);
+  background: #E08A00;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ホームのカードではバッジを右上に重ねる */
+.coupon-card:not(.coupon-row) .coupon-badge {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+}
+
+.coupon-note {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gray-700);
+  line-height: 1.4;
+}
+
+.coupon-note.is-active {
+  color: #C06F00;
+  font-weight: 700;
+}
+
+/* 一覧カードのラベル（回遊・カテゴリ）を横に並べる */
+.coupon-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ホームのカードはボタンを下端にそろえる */
+.coupon-card:not(.coupon-row) .coupon-btn {
+  margin-top: auto;
+}
+
+/* 利用条件 */
+.coupon-condition {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray-700);
+  line-height: 1.4;
+}
+
+.coupon-card:not(.coupon-row) .coupon-condition {
+  margin-top: -4px;
+}
+
+/* カードは押すと詳細が開く */
+.coupon-card {
+  cursor: pointer;
+}
+
+/* ════════════════════════════
+   クーポン詳細（下から出てくるパネル）
+   ════════════════════════════ */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  transition: background 0.25s;
+}
+
+.sheet-overlay.is-open {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: 22px 22px 0 0;
+  padding: 10px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transform: translateY(100%);
+  transition: transform 0.25s ease-out;
+}
+
+.sheet-overlay.is-open .sheet {
+  transform: translateY(0);
+}
+
+/* 中身が多いときに、ボタンの列などがつぶれないようにする（パネル全体をスクロールさせる） */
+.sheet > * {
+  flex-shrink: 0;
+}
+
+.sheet-handle {
+  align-self: center;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--gray-200);
+  margin-bottom: 6px;
+}
+
+.sheet-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sheet .coupon-category {
+  background: var(--green-pale);
+}
+
+.sheet-title {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.4;
+  padding-right: 36px;
+}
+
+.sheet-discount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green-primary);
+  line-height: 1;
+}
+
+.sheet-discount span {
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.sheet.is-tour .sheet-discount {
+  color: #C06F00;
+}
+
+.sheet-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+
+.sheet-info {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px 12px;
+  padding: 14px 16px;
+  background: var(--gray-100);
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.sheet-info dt {
+  color: var(--gray-400);
+  font-weight: 500;
+}
+
+.sheet-info dd {
+  font-weight: 700;
+}
+
+.sheet-info .tour-countdown {
+  font-size: inherit;
+  margin-left: 0;
+  color: #C06F00;
+}
+
+.sheet-howto-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.sheet-howto ol {
+  padding-left: 1.4em;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--gray-700);
+}
+
+.sheet-btn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 14px 0;
+  background: var(--green-primary);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sheet.is-tour .sheet-btn {
+  background: #E08A00;
+}
+
+.sheet-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ════════════════════════════
+   お店の予約
+   ════════════════════════════ */
+a.reserve-btn {
+  text-decoration: none;
+}
+
+/* 食べる・泊まる・体験するの切り替え */
+.reserve-switch {
+  display: flex;
+  gap: 4px;
+  margin: 16px 16px 0;
+  padding: 4px;
+  background: var(--gray-200);
+  border-radius: 12px;
+}
+
+.reserve-switch a {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 9px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.reserve-switch a.active {
+  background: var(--white);
+  color: var(--green-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.reserve-lead {
+  margin: 14px 16px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+/* お店のカード（予約ページ・加盟店一覧で共通） */
+.shop-list,
+.merchant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 16px 0;
+}
+
+.shop-card {
+  background: var(--white);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.shop-card:active {
+  transform: scale(0.98);
+}
+
+.shop-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.shop-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--green-pale);
+  color: var(--green-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.shop-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.shop-card .coupon-category {
+  background: var(--green-pale);
+}
+
+.shop-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.shop-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.shop-btn {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  background: var(--green-primary);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 予約フォーム */
+.reserve-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  background: var(--gray-100);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px; /* 16px 未満だと iPhone で入力時に画面が拡大される */
+  color: var(--text-primary);
+}
+
+.form-input:focus {
+  outline: 2px solid var(--green-light);
+  outline-offset: 1px;
+}
+
+.form-error {
+  font-size: 12px;
+  font-weight: 700;
+  color: #C62828;
+}
+
+/* 予約完了 */
+.reserve-check {
+  align-self: center;
+  width: 64px;
+  height: 64px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: var(--green-primary);
+  color: var(--white);
+  font-size: 32px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reserve-done-title {
+  text-align: center;
+  padding-right: 0;
+}
+
+/* お店のアクセス */
+.shop-access {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+/* 回遊の起点バッジ（高尾山エリアのお店） */
+.coupon-badge.is-origin {
+  background: var(--green-primary);
+}
+
+/* 予約画面の回遊クーポン案内 */
+.tour-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  background: #FFF7E6;
+  border: 1.5px dashed #E08A00;
+  border-radius: 12px;
+}
+
+.tour-box.is-origin {
+  background: var(--green-pale);
+  border-color: var(--green-primary);
+}
+
+.tour-box-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-box-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tour-box-amount {
+  font-size: 12px;
+  color: var(--gray-700);
+}
+
+.tour-box-amount strong {
+  font-size: 18px;
+  font-weight: 900;
+  color: #C06F00;
+  margin-right: 2px;
+}
+
+.tour-box-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.tour-box-warn {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #C62828;
+}
+
+.tour-box-btn {
+  align-self: flex-start;
+  padding: 8px 14px;
+  background: #E08A00;
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* クーポン詳細の「このお店を予約する」 */
+.sheet-link {
+  display: block;
+  padding: 12px 0;
+  border: 1.5px solid var(--green-primary);
+  border-radius: 12px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-primary);
+}
+
+/* 予約画面の「獲得済み」ボタン（押せない） */
+.tour-box-btn.is-done {
+  background: var(--white);
+  color: #C06F00;
+  border: 1.5px solid #E08A00;
+  cursor: default;
+}
+
+/* ════════════════════════════
+   加盟店一覧
+   ════════════════════════════ */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 16px 0;
+  padding: 0 14px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  color: var(--gray-400);
+}
+
+.merchant-search {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px; /* 16px 未満だと iPhone で入力時に画面が拡大される */
+  color: var(--text-primary);
+  outline: none;
+}
+
+.search-box:focus-within {
+  border-color: var(--green-light);
+}
+
+.area-chips {
+  padding-top: 12px;
+}
+
+.merchant-count {
+  margin: 12px 16px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.merchant-list {
+  margin-top: 8px;
+}
+
+/* 通常クーポン・予約可のバッジ */
+.coupon-badge.is-coupon {
+  background: var(--green-light);
+}
+
+.coupon-badge.is-reserve {
+  background: var(--gray-700);
+}
+
+/* 通常クーポンの案内（緑） */
+.tour-box.is-normal {
+  background: var(--green-pale);
+  border-color: var(--green-primary);
+}
+
+.tour-box.is-normal .tour-box-amount strong {
+  color: var(--green-primary);
+}
+
+.tour-box.is-normal .tour-box-btn {
+  background: var(--green-primary);
+}
+
+.tour-box.is-normal .tour-box-btn.is-done {
+  background: var(--white);
+  color: var(--green-primary);
+  border-color: var(--green-primary);
+}
+
+.tour-box-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tour-box-link {
+  padding: 8px 0;
+  background: none;
+  border: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* リンクで作った大きいボタン */
+.sheet-btn-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ── 加盟店一覧：リスト / 地図の切り替え ── */
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 16px 0;
+}
+
+.list-head .merchant-count {
+  margin: 0;
+}
+
+.view-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--gray-200);
+  border-radius: 10px;
+}
+
+.view-switch button {
+  padding: 6px 14px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+
+.view-switch button.active {
+  background: var(--white);
+  color: var(--green-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ── 地図 ── */
+.map-view {
+  position: relative;
+  z-index: 0; /* 地図がヘッダーや下のパネルより上に出ないようにする */
+  margin: 10px 16px 0;
+}
+
+.merchant-map {
+  height: 60vh;
+  min-height: 320px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--gray-200);
+}
+
+.map-error {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+/* ピン */
+.map-pin {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gray-700);
+  border: 3px solid var(--white);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.map-pin.is-origin {
+  background: var(--green-primary);
+}
+
+.map-pin.is-tour {
+  background: #E08A00;
+}
+
+/* 凡例 */
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.map-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.map-legend .map-pin {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.map-note {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+/* 吹き出し */
+.map-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 160px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.map-popup-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.map-popup-genre {
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.map-popup-coupon {
+  font-size: 11px;
+  font-weight: 700;
+  color: #C06F00;
+}
+
+.map-popup-btn {
+  margin-top: 6px;
+  padding: 7px 0;
+  background: var(--green-primary);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── 加盟店一覧：エリア・カテゴリの絞り込み ── */
+.filter-row,
+.group-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0 16px;
+}
+
+.filter-row .area-chips {
+  flex: 1;
+  min-width: 0; /* 横スクロールできるようにする */
+  padding: 0 16px 0 0;
+}
+
+.filter-label {
+  flex-shrink: 0;
+  width: 52px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-400);
+}
+
+.filter-row .category-chip {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.group-bar {
+  margin-right: 16px;
+}
+
+/* 一覧の見出し */
+.group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 4px solid var(--green-primary);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.group-head:first-child {
+  margin-top: 0;
+}
+
+.group-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-400);
+}
+
+/* ════════════════════════════
+   スタンプラリー
+   ════════════════════════════ */
+.coupon-badge.is-stamp {
+  background: #C2185B;
+}
+
+/* 加盟店の詳細パネルの枠 */
+.stamp-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  background: #FCE4EC;
+  border: 1.5px dashed #C2185B;
+  border-radius: 12px;
+}
+
+.stamp-box .tour-box-btn {
+  background: #C2185B;
+}
+
+.stamp-box .tour-box-link {
+  align-self: flex-start;
+  text-decoration: underline;
+  font-size: 12px;
+  font-weight: 700;
+  color: #C2185B;
+}
+
+/* 上のカード */
+.stamp-hero {
+  margin: 16px 16px 0;
+  padding: 22px 20px 18px;
+  border-radius: var(--radius-card);
+  background: linear-gradient(135deg, #AD1457, #E35D8C);
+  box-shadow: 0 4px 20px rgba(173, 20, 87, 0.25);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stamp-hero-title {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.stamp-hero-text {
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.stamp-count {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.stamp-count strong {
+  font-size: 40px;
+  font-weight: 900;
+  margin-right: 4px;
+}
+
+.stamp-progress {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 4px 0 6px;
+}
+
+.stamp-progress-bar {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--white);
+  transition: width 0.3s;
+}
+
+/* 特典がもらえる位置の目印 */
+.stamp-tick {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #E35D8C;
+  border: 2px solid var(--white);
+}
+
+.stamp-tick.is-reached {
+  background: #FFD54F;
+}
+
+.stamp-hero-period {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* 各ブロック */
+.stamp-section {
+  margin: 16px 16px 0;
+  padding: 16px;
+  background: var(--white);
+  border-radius: var(--radius-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stamp-section-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.stamp-section-note {
+  margin-top: -6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+/* スタンプカード */
+.stamp-card {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+}
+
+.stamp-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer;
+}
+
+.stamp-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px dashed #E8A7BF;
+  background: #FFF5F8;
+  color: #E8A7BF;
+  font-size: 18px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 押されたスタンプ（ハンコ風に少し傾ける） */
+.stamp-cell.is-done .stamp-mark {
+  border: 3px double #C2185B;
+  background: #FCE4EC;
+  color: #C2185B;
+  font-size: 22px;
+  transform: rotate(-12deg);
+}
+
+.stamp-name {
+  width: 100%;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--gray-700);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 長い店名は2行まで */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 特典 */
+.stamp-rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stamp-reward {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--gray-100);
+  border-radius: 12px;
+}
+
+.stamp-reward-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #C2185B;
+}
+
+.stamp-reward-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stamp-reward-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: #C2185B;
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stamp-reward-btn.is-locked {
+  background: var(--gray-200);
+  color: var(--gray-700);
+  cursor: default;
+}
+
+.stamp-reward-btn.is-claimed {
+  background: var(--white);
+  color: #C2185B;
+  border: 1.5px solid #C2185B;
+  cursor: default;
+}
+
+/* 対象のお店 */
+.stamp-spots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stamp-spot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  background: var(--gray-100);
+  border: none;
+  border-radius: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stamp-spot .shop-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.stamp-spot .shop-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.stamp-spot-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.stamp-spot-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stamp-spot-genre {
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.stamp-spot-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-400);
+}
+
+.stamp-spot.is-done .stamp-spot-status {
+  color: #C2185B;
+}
+
+/* ════════════════════════════
+   加盟店一覧：近い順
+   ════════════════════════════ */
+/* カード右上の距離 */
+.shop-distance {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-primary);
+}
+
+.shop-distance:empty {
+  display: none;
+}
+
+/* 現在地の取得状況 */
+.location-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 10px 16px 0;
+  padding: 10px 12px;
+  background: var(--green-pale);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--green-dark);
+}
+
+.location-demo-btn {
+  padding: 6px 10px;
+  background: var(--white);
+  border: 1.5px solid var(--green-primary);
+  border-radius: 8px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-primary);
+  cursor: pointer;
+}
+
+/* 地図の現在地ピン */
+.map-pin.is-me {
+  width: 18px;
+  height: 18px;
+  background: #1E88E5;
+  box-shadow: 0 0 0 6px rgba(30, 136, 229, 0.25);
+}
+
+.map-legend .map-pin.is-me {
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.25);
+}
+
+/* 「現在地から近い順」のオン・オフスイッチ */
+.near-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.near-toggle-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 本物のチェックボックスは見えなくして、下のスイッチで見せる */
+.near-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.near-toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--gray-200);
+  transition: background 0.2s;
+}
+
+.near-toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s;
+}
+
+.near-toggle input:checked + .near-toggle-switch {
+  background: var(--green-primary);
+}
+
+.near-toggle input:checked + .near-toggle-switch::after {
+  transform: translateX(18px);
+}
+
+.near-toggle input:focus-visible + .near-toggle-switch {
+  outline: 2px solid var(--green-light);
+  outline-offset: 2px;
+}
+
+/* ════════════════════════════
+   ポイント
+   ════════════════════════════ */
+.coupon-badge.is-point {
+  background: #1565C0;
+}
+
+.point-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #E3F2FD;
+  border-radius: 12px;
+}
+
+.point-box-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.point-box-amount strong {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1565C0;
+}
+
+.point-box-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.point-box.is-done {
+  text-align: center;
+  border: 1.5px solid #1565C0;
+}
+
+.point-box.is-done .point-box-amount strong {
+  font-size: 26px;
+}
+
+/* ════════════════════════════
+   お知らせ
+   ════════════════════════════ */
+.notice-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.notice-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.notice-chips .category-chip {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notice-empty {
+  padding: 30px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-400);
+}
+
+.notice-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 12px;
+}
+
+/* 未読は少し色をつける */
+.notice-item.is-unread {
+  background: var(--green-pale);
+}
+
+.notice-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  background: var(--green-primary);
+}
+
+.notice-item.is-points .notice-icon  { background: #1565C0; }
+.notice-item.is-charge .notice-icon  { background: #E08A00; }
+.notice-item.is-reserve .notice-icon { background: #6A1B9A; }
+
+.notice-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notice-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+.notice-type {
+  font-weight: 700;
+}
+
+.notice-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.notice-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-700);
+}
+
+/* ════════════════════════════
+   チャージ
+   ════════════════════════════ */
+.charge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.charge-option {
+  padding: 16px 0;
+  background: var(--gray-100);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.charge-option.active {
+  background: var(--green-pale);
+  border-color: var(--green-primary);
+  color: var(--green-primary);
+}
+
+.charge-after {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+  text-align: center;
 }

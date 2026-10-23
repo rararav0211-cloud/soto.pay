@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>加盟店一覧｜桑都ペイ</title>
+  <!-- 地図ライブラリ Leaflet（style.css より先に読み込む） -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="top-bar sub-bar">
+    <a href="index.html" class="back-btn" aria-label="ホームに戻る">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </a>
+    <h1 class="page-title">加盟店一覧</h1>
+    <button class="notification-btn" aria-label="お知らせ">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+    <!-- 店名やジャンルで検索 -->
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="search" class="merchant-search" placeholder="店名・ジャンルで探す" aria-label="加盟店を検索">
+    </div>
+
+    <!-- エリア・カテゴリのボタンは js/page-shops.js で自動生成 -->
+    <div class="filter-row">
+      <span class="filter-label">エリア</span>
+      <div class="area-chips merchant-area-chips"></div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">カテゴリ</span>
+      <div class="area-chips merchant-category-chips"></div>
+    </div>
+
+    <div class="list-head">
+      <p class="merchant-count"></p>
+      <!-- リスト / 地図の切り替え -->
+      <div class="view-switch">
+        <button class="active" data-view="list">リスト</button>
+        <button data-view="map">地図</button>
+      </div>
+    </div>
+
+    <!-- 現在地から近い順のオン・オフ（リストのときだけ表示） -->
+    <div class="group-bar">
+      <label class="near-toggle">
+        <span class="near-toggle-text">現在地から近い順</span>
+        <input type="checkbox" role="switch">
+        <span class="near-toggle-switch" aria-hidden="true"></span>
+      </label>
+    </div>
+    <!-- 現在地の取得状況（「近い順」のときだけ表示） -->
+    <p class="location-status" hidden></p>
+
+    <!-- 加盟店のカードと見出しは js/page-shops.js で自動生成 -->
+    <section class="merchant-list">
+      <p class="coupon-empty merchant-empty" hidden>該当する加盟店はありません</p>
+    </section>
+
+    <!-- 地図（「地図」を押したときに表示） -->
+    <section class="map-view" hidden>
+      <div class="merchant-map"></div>
+      <div class="map-legend">
+        <span><i class="map-pin is-origin"></i>高尾山エリア（回遊の起点）</span>
+        <span><i class="map-pin is-tour"></i>回遊クーポン</span>
+        <span><i class="map-pin"></i>その他の加盟店</span>
+        <span><i class="map-pin is-me"></i>現在地</span>
+      </div>
+      <p class="map-note">※ ピンの位置はおおよその場所です</p>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>ホーム</span>
+    </a>
+    <a href="shops.html?sort=near" class="nav-item nav-near">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <span>近くのお店</span>
+    </a>
+    <button class="nav-item pay-nav">
+      <div class="pay-circle">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
+      </div>
+      <span>支払う</span>
+    </button>
+    <button class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>アカウント</span>
+    </button>
+  </nav>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- 読み込む順番を変えないでください（上のファイルを下のファイルが使います） -->
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/state.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/ui-coupon.js"></script>
+<script src="js/ui-merchant.js"></script>
+<script src="js/page-shops.js"></script>
+</body>
+</html>
