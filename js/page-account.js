@@ -1,7 +1,8 @@
 // ════════════════════════════════════════
 //  page-account.js … アカウント（account.html）だけで使う処理
 //  ・会員情報（会員番号・残高・ポイント）
-//  ・予約の一覧とキャンセル
+//  ・これからの予約とキャンセル（カードとキャンセルの画面は ui-reservation.js）
+//  ・予約履歴の画面への入口
 //  ・履歴・特典（取引履歴・ポイント履歴・お知らせ・クーポン・スタンプラリー）
 //  ・デモをはじめからにする（発表・テスト用）
 // ════════════════════════════════════════
@@ -11,7 +12,6 @@
   const reservationBox = document.querySelector('.account-reservations');
   const menu = document.querySelector('.account-menu');
   const demoBox = document.querySelector('.account-demo');
-  let showPast = false; // 予約履歴（来店日を過ぎた予約・キャンセルした予約）を開いているか
 
   // ════════════════════════════
   //  会員情報
@@ -47,43 +47,11 @@
   // ════════════════════════════
   //  予約
   // ════════════════════════════
-  function getShopType(r) {
-    const shop = SHOPS.find((s) => s.id === r.shopId);
-    return shop ? shop.type : 'food';
-  }
-
-  // 予約1件のカード
-  function createReservationCard(r) {
-    const upcoming = isUpcomingReservation(r);
-    const item = el('div', upcoming ? 'account-reservation' : 'account-reservation is-past');
-
-    const head = el('div', 'account-reservation-head');
-    const info = el('div', 'account-reservation-info');
-    const labels = el('div', 'coupon-labels');
-    labels.append(el('span', 'coupon-category', RESERVE_TYPES[getShopType(r)].title));
-    if (r.canceledAt) labels.append(el('span', 'coupon-badge is-canceled', 'キャンセル済み'));
-    else if (!upcoming) labels.append(el('span', 'coupon-badge is-reserve', '来店日を過ぎました'));
-    info.append(labels, el('p', 'pay-shop-name', r.shopName), el('p', 'account-reservation-when', getReservationWhen(r)));
-    head.append(createIcon(getShopType(r)), info);
-
-    const detail = el('p', 'account-reservation-detail', `${r.people}名・予約番号 ${r.id}${r.points ? `・${r.points.toLocaleString()}pt` : ''}`);
-    item.append(head, detail);
-
-    if (upcoming) {
-      const cancel = el('button', 'tour-box-link account-cancel', '予約をキャンセルする');
-      cancel.addEventListener('click', () => openCancel(r));
-      item.append(cancel);
-    }
-    return item;
-  }
-
   function renderReservations() {
     reservationBox.replaceChildren();
-    // これからの予約は日にちの近い順、予約履歴は新しい順
+    // これからの予約を日にちの近い順に
     const upcoming = reservations.filter(isUpcomingReservation)
       .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
-    const past = reservations.filter((r) => !isUpcomingReservation(r))
-      .sort((a, b) => b.date.localeCompare(a.date));
 
     if (upcoming.length === 0) {
       reservationBox.append(el('p', 'notice-empty', 'これからの予約はありません'));
@@ -92,60 +60,8 @@
 
     const link = el('a', 'sheet-link', 'お店を予約する');
     link.href = 'reserve.html';
-    reservationBox.append(link);
-
-    if (past.length > 0) {
-      const toggle = el('button', 'tour-box-link account-past-toggle',
-        `${showPast ? '▲' : '▼'} 予約履歴`);
-      toggle.addEventListener('click', () => {
-        showPast = !showPast;
-        renderReservations();
-      });
-      reservationBox.append(toggle);
-      if (showPast) past.forEach((r) => reservationBox.append(createReservationCard(r)));
-    }
-  }
-
-  // キャンセルの確認 → 完了
-  function openCancel(r) {
-    function fillConfirm() {
-      resetSheet('予約のキャンセル');
-      const info = el('dl', 'sheet-info');
-      info.append(
-        el('dt', '', 'お店'), el('dd', '', r.shopName),
-        el('dt', '', r.nights ? 'チェックイン' : '日時'), el('dd', '', getReservationWhen(r)),
-        el('dt', '', '人数'), el('dd', '', `${r.people}名`),
-        el('dt', '', '予約番号'), el('dd', '', r.id)
-      );
-      sheet.append(...sheetTop(), el('h2', 'sheet-title', 'この予約をキャンセルしますか？'), info);
-
-      const minus = Math.min(r.points || 0, pointData.balance);
-      if (minus > 0) {
-        const warn = el('div', 'point-box');
-        warn.append(el('p', 'point-box-text', `この予約でもらった ${minus.toLocaleString()}pt は差し引かれます。`));
-        sheet.append(warn);
-      }
-
-      const ok = el('button', 'sheet-btn account-cancel-btn', 'キャンセルする');
-      ok.addEventListener('click', () => {
-        if (cancelReservation(r.id)) fillDone(minus);
-      });
-      const back = el('button', 'sheet-link account-back', 'もどる');
-      back.addEventListener('click', closeSheet);
-      sheet.append(ok, back);
-    }
-
-    function fillDone(minus) {
-      resetSheet('キャンセル完了');
-      const closeBtn = el('button', 'sheet-btn', '閉じる');
-      closeBtn.addEventListener('click', closeSheet);
-      sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
-        el('h2', 'sheet-title reserve-done-title', '予約をキャンセルしました'),
-        el('p', 'sheet-desc', `${r.shopName}（${getReservationWhen(r)}）の予約をキャンセルしました。${minus > 0 ? `${minus.toLocaleString()}ptを差し引きました。` : ''}`),
-        closeBtn);
-    }
-
-    openSheet(fillConfirm, false);
+    // 来店日を過ぎた予約・キャンセルした予約は、予約履歴の画面で見る
+    reservationBox.append(link, createMenuRow('予約履歴', '', 'reservation-history.html'));
   }
 
   // ════════════════════════════

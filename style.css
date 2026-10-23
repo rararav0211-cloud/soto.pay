@@ -2785,10 +2785,6 @@ a.action-btn {
   background: #C62828;
 }
 
-.account-past-toggle {
-  align-self: center;
-}
-
 .sheet .account-cancel-btn {
   background: #C62828;
 }
@@ -2885,4 +2881,18 @@ a.action-btn {
 
 .account-reset {
   color: var(--gray-400);
+}
+
+/* 予約履歴（reservation-history.html） */
+.reservation-history .account-reservation {
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.reservation-history .account-reservation.is-past {
+  opacity: 1; /* 履歴の画面では薄くしない */
+}
+
+.reservation-history .account-reservation .coupon-category {
+  background: var(--green-pale);
 }
