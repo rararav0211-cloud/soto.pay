@@ -339,13 +339,9 @@ function openCouponPay() {
 // ════════════════════════════
 //  QRコード
 //  お店のQRコードの中身は「SOTOPAY:SHOP:加盟店の key」
-//  （pay.html で読み取ると、そのお店への支払い画面が開く）
+//  （pay.html で読み取ると、そのお店への支払い画面が開く。お店のQRはお店側で用意する想定）
 // ════════════════════════════
 const SHOP_QR_PREFIX = 'SOTOPAY:SHOP:';
-
-function getShopQrText(m) {
-  return `${SHOP_QR_PREFIX}${m.key}`;
-}
 
 // 読み取った文字からお店を探す（桑都ペイのお店のQRでなければ null）
 function findMerchantByQr(text) {
