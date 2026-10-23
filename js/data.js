@@ -168,9 +168,9 @@ const SHOPS = [
 
 // ════════════════════════════
 //  スタンプラリー
-//  対象のお店で桑都ペイを使うとスタンプが1つたまる（今は「ここで支払う」ボタンで押す）
+//  対象のお店で桑都ペイを使うとスタンプが1つたまる
 //  spots   : 対象のお店。予約できるお店は { shop: SHOPS の id }、クーポンのお店は { coupon: COUPONS の id }
-//  rewards : count 個たまったらもらえる特典
+//  rewards : count 個たまったらもらえる特典（amount 円が残高に入る）
 //  ※ 期間と特典の内容はデモ用の仮のものです
 // ════════════════════════════
 const STAMP_RALLY = {
@@ -190,9 +190,9 @@ const STAMP_RALLY = {
     { coupon: 'yume-museum' },
   ],
   rewards: [
-    { count: 3, label: '桑都ペイ 200円分' },
-    { count: 5, label: '桑都ペイ 500円分' },
-    { count: 8, label: '全制覇！桑都ペイ 1,000円分' },
+    { count: 3, amount: 200,  label: '桑都ペイ 200円分' },
+    { count: 5, amount: 500,  label: '桑都ペイ 500円分' },
+    { count: 8, amount: 1000, label: '全制覇！桑都ペイ 1,000円分' },
   ],
 };
 

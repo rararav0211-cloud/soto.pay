@@ -76,6 +76,10 @@
 
     // 配信中
     const expiry = formatTime(tour.expiresAt);
+    if (status === 'used') {
+      box.append(el('p', 'tour-box-text', '今日の回遊クーポンは、もう使いました。'));
+      return box;
+    }
     if (status === 'acquired') {
       box.append(el('p', 'tour-box-text', `お会計を桑都ペイで支払うと自動で割引されます（本日${expiry}まで）。`));
       // 獲得済みは、押せないボタンで「獲得済み」と表示する

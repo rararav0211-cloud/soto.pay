@@ -79,9 +79,10 @@ seedDemoHistory();
 // ════════════════════════════
 //  コンソールから使うコマンド
 //  sotoPayDemo.expire()       … 回遊クーポンをすぐ期限切れにする
-//  sotoPayDemo.reset()        … 獲得状況・回遊クーポン・予約・スタンプ・ポイント・お知らせ・残高をすべてリセット
+//  sotoPayDemo.reset()        … 獲得状況・回遊クーポン・支払い・予約・スタンプ・ポイント・お知らせ・残高をすべてリセット
 //                               （ページを開き直すと、デモ用の架空の履歴がもう一度入る）
 //  sotoPayDemo.log()          … 送客の記録（どのクーポンが何時に獲得されたか）を表示
+//  sotoPayDemo.payments()     … 支払いの記録を表示
 //  sotoPayDemo.reservations() … 予約の一覧を表示
 //  sotoPayDemo.points()       … ポイントの履歴を表示
 // ════════════════════════════
@@ -94,6 +95,8 @@ window.sotoPayDemo = {
   },
   reset() {
     acquired.length = 0;
+    usedCoupons.length = 0;
+    payments.length = 0;
     reservations.length = 0;
     stampData.stamps = {};
     stampData.claimed = [];
@@ -106,6 +109,12 @@ window.sotoPayDemo = {
       Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
     } catch (e) {}
     render();
+  },
+  payments() {
+    console.table(payments.map((p) => ({
+      取引番号: p.id, お店: p.name, お会計: p.amount, 割引: p.discount, 支払い: p.paid,
+      日時: new Date(p.at).toLocaleString('ja-JP'),
+    })));
   },
   reservations() {
     console.table(reservations);

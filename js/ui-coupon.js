@@ -10,6 +10,7 @@
 const BUTTON_TEXT = {
   available: '獲得する',
   acquired: '獲得済み',
+  used: '使用済み',
   locked: '未解放',
   expired: '期限切れ',
 };
@@ -26,6 +27,7 @@ function getExpiryText(coupon, status) {
   if (coupon.kind !== 'tour') return 'なし';
   if (status === 'locked') return `${TOUR_ORIGIN}で支払った日の23:59まで`;
   if (status === 'expired') return '期限切れ';
+  if (status === 'used') return '使用済み';
   return `本日${formatTime(tour.expiresAt)}まで`;
 }
 
@@ -47,7 +49,7 @@ function createCouponCard(coupon, isRow) {
   card.dataset.category = coupon.category;
   card.dataset.status = status;
   if (coupon.kind === 'tour') card.classList.add('is-tour');
-  if (status === 'locked' || status === 'expired') card.classList.add('is-inactive');
+  if (status === 'locked' || status === 'expired' || status === 'used') card.classList.add('is-inactive');
 
   const name = el('p', 'coupon-name', coupon.name);
   const discount = createDiscount('coupon-discount', coupon);
@@ -73,6 +75,8 @@ function createCouponCard(coupon, isRow) {
       note = el('p', 'coupon-note', `${TOUR_ORIGIN}で支払うと解放`);
     } else if (status === 'expired') {
       note = el('p', 'coupon-note', '有効期限が切れました');
+    } else if (status === 'used') {
+      note = el('p', 'coupon-note', '使用済みです');
     } else {
       note = el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`);
     }
@@ -146,16 +150,19 @@ function fillDetail(coupon) {
   }
   steps.append(
     el('li', '', '「獲得する」を押してクーポンを受け取ります'),
-    el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます')
+    el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます'),
+    el('li', '', 'または「このクーポンを使う」を押して、スタッフに画面を見せます')
   );
   howto.append(steps);
 
-  // 獲得ボタン
+  // 獲得ボタン（獲得済みなら「このクーポンを使う」）
   const btn = el('button', 'sheet-btn', status === 'locked'
     ? `${TOUR_ORIGIN}で支払うと解放`
-    : BUTTON_TEXT[status]);
+    : status === 'acquired' ? 'このクーポンを使う' : BUTTON_TEXT[status]);
   if (status === 'available') {
     btn.addEventListener('click', () => acquireCoupon(coupon));
+  } else if (status === 'acquired') {
+    btn.addEventListener('click', () => openCouponUse(coupon));
   } else {
     btn.disabled = true;
   }
@@ -169,6 +176,150 @@ function fillDetail(coupon) {
     link.href = `reserve.html?type=${shop.type}&shop=${shop.id}`;
     sheet.append(link);
   }
+}
+
+// ════════════════════════════
+//  スライドして決める部品（まちがえて押さないように、ボタンではなくスライドにする）
+//  label      … スライドの中に出す文字（\n のところで改行する）
+//  onComplete … 右はしまでスライドしたときに呼ぶ
+// ════════════════════════════
+function createSlider(label, onComplete) {
+  const track = el('div', 'slide-track');
+  const fill = el('div', 'slide-fill');
+  const text = el('span', 'slide-text', label);
+  const knob = el('button', 'slide-knob');
+  knob.type = 'button';
+  knob.setAttribute('aria-label', `${label.replace('\n', '')}（右にスライド）`);
+  // 矢印のアイコン（固定の SVG だけなので innerHTML を使っている）
+  knob.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+  track.append(fill, text, knob);
+
+  const GAP = 4;    // つまみとふちのすき間（CSS の top / left と同じ）
+  let x = 0;        // つまみの位置
+  let startX = 0;   // ドラッグを始めたときの、指の位置とつまみの位置の差
+  let dragging = false;
+  let done = false;
+
+  // つまみが動ける一番右の位置
+  function getMax() {
+    return track.clientWidth - knob.offsetWidth - GAP * 2;
+  }
+
+  function moveTo(value) {
+    const max = getMax();
+    x = Math.max(0, Math.min(value, max));
+    knob.style.transform = `translateX(${x}px)`;
+    fill.style.width = `${x + knob.offsetWidth + GAP}px`;
+    text.style.opacity = String(1 - (x / max) * 0.9); // 右へ行くほど文字を薄く
+  }
+
+  function finish() {
+    if (x >= getMax() * 0.9) {
+      // 右はしまで来たら決定
+      done = true;
+      moveTo(getMax());
+      track.classList.add('is-done');
+      if (navigator.vibrate) navigator.vibrate(60);
+      setTimeout(onComplete, 250); // 右はしに着いたのが見えてから次へ
+    } else {
+      moveTo(0); // 途中で離したら左に戻る
+    }
+  }
+
+  knob.addEventListener('pointerdown', (e) => {
+    if (done) return;
+    dragging = true;
+    startX = e.clientX - x;
+    knob.setPointerCapture(e.pointerId);
+    track.classList.add('is-dragging');
+  });
+  knob.addEventListener('pointermove', (e) => {
+    if (dragging) moveTo(e.clientX - startX);
+  });
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('is-dragging');
+    finish();
+  }
+  knob.addEventListener('pointerup', endDrag);
+  knob.addEventListener('pointercancel', endDrag);
+
+  // キーボードでも操作できるようにする（→キーで少しずつ、End で右はし）
+  knob.addEventListener('keydown', (e) => {
+    if (done) return;
+    if (e.key === 'ArrowRight') moveTo(x + getMax() / 5);
+    else if (e.key === 'ArrowLeft') moveTo(x - getMax() / 5);
+    else if (e.key === 'End') moveTo(getMax());
+    else return;
+    e.preventDefault();
+    if (x >= getMax()) finish();
+  });
+
+  return track;
+}
+
+// ════════════════════════════
+//  クーポン使用画面
+//  お客様はこの画面をスタッフに見せ、使用のスライドはスタッフが動かす
+//  1. 使用画面（スライドで使用） → 2. 使用済み
+// ════════════════════════════
+function openCouponUse(coupon) {
+  // クーポンの中身（2つの画面で共通）
+  function createTicket() {
+    const ticket = el('div', coupon.kind === 'tour' ? 'use-ticket is-tour' : 'use-ticket');
+    const labels = el('div', 'coupon-labels');
+    if (coupon.kind === 'tour') labels.append(el('span', 'coupon-badge', '回遊'));
+    labels.append(el('span', 'coupon-category', getCategoryLabel(coupon.category)));
+    ticket.append(
+      labels,
+      el('p', 'use-ticket-shop', coupon.name),
+      createDiscount('use-ticket-discount', coupon),
+      el('p', 'use-ticket-condition', getConditionText(coupon))
+    );
+    if (coupon.kind === 'tour' && isTourActive()) {
+      ticket.append(el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`));
+    }
+    return ticket;
+  }
+
+  // 1. 使用画面
+  function fillUse() {
+    resetSheet('クーポン使用画面');
+    sheet.classList.toggle('is-tour', coupon.kind === 'tour');
+
+    const notice = el('div', 'use-staff-notice');
+    notice.append(
+      el('p', 'use-staff-title', 'この画面をスタッフに見せてください'),
+      el('p', 'use-staff-text', '下のスライドはスタッフが操作します。お客様が動かすと、クーポンが使えなくなります。')
+    );
+
+    const slider = createSlider('スタッフが操作しますので\n触れないでください。', () => {
+      if (useCoupon(coupon)) fillDone(Date.now());
+    });
+    const staffNote = el('p', 'use-slide-note', 'スタッフの方へ：右にスライドすると使用済みになります。\n使用済みにすると取り消せません。');
+
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポン使用画面'), createTicket(), notice, slider, staffNote);
+  }
+
+  // 2. 使用済み
+  function fillDone(usedAt) {
+    resetSheet('クーポン使用済み');
+    const ticket = createTicket();
+    ticket.classList.add('is-used');
+    ticket.append(el('span', 'use-stamp', '使用済み'));
+
+    const info = el('dl', 'sheet-info');
+    info.append(el('dt', '', '使用日時'), el('dd', '', formatDateTime(usedAt)));
+
+    const closeBtn = el('button', 'sheet-btn', '閉じる');
+    closeBtn.addEventListener('click', closeSheet);
+    sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
+      el('h2', 'sheet-title reserve-done-title', 'クーポンを使用しました'), ticket, info,
+      el('p', 'sheet-desc', 'スタッフがこの画面を確認したら、閉じてください。'), closeBtn);
+  }
+
+  openSheet(fillUse, false);
 }
 
 // ════════════════════════════
@@ -210,11 +361,9 @@ function renderBanners() {
         ? '前回の回遊クーポンは期限が切れました。もう一度高尾山で使うと再配信されます。'
         : `${TOUR_ORIGIN}で桑都ペイを使うと、その日限りの「回遊」クーポンが解放されます。`)
     );
+    // 高尾山エリアのお店だけを出した支払い画面を開く
     const demoBtn = el('button', 'tour-demo-btn', `${TOUR_ORIGIN}で支払う`);
-    demoBtn.addEventListener('click', () => {
-      addNotice('payment', '支払いが完了しました', `${TOUR_ORIGIN}で桑都ペイを使いました。${TOUR_DESTINATION}の回遊クーポンが届きました。`);
-      unlockTour();
-    });
+    demoBtn.addEventListener('click', () => openPay({ area: 'takao' }));
     banner.append(demoBtn);
   });
 }

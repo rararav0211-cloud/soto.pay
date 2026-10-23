@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支払う｜桑都ペイ</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="top-bar sub-bar">
+    <a href="index.html" class="back-btn" aria-label="ホームに戻る">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </a>
+    <h1 class="page-title">支払う</h1>
+    <button class="notification-btn" aria-label="お知らせ">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="pay-page">
+    <!-- 「コードを見せる」「QRを読み取る」の切り替え -->
+    <div class="coupon-tabs pay-tabs" role="tablist">
+      <button class="coupon-tab active" data-mode="show" role="tab">コードを見せる</button>
+      <button class="coupon-tab" data-mode="scan" role="tab">QRを読み取る</button>
+    </div>
+
+    <!-- コードを見せる：お店のレジで読み取ってもらう -->
+    <section class="pay-panel pay-show">
+      <div class="pay-code-card">
+        <p class="pay-code-lead">お店の人にこのコードを読み取ってもらってください</p>
+        <!-- QRコードは js/page-pay.js で自動生成 -->
+        <div class="pay-qr"></div>
+        <p class="pay-code-number"></p>
+        <div class="pay-code-refresh">
+          <span class="pay-code-timer"></span>
+          <button class="tour-box-link pay-code-renew">更新</button>
+        </div>
+        <div class="pay-code-balance">
+          <span>使用可能金額</span>
+          <strong><span class="amount-value">0</span>円</strong>
+        </div>
+      </div>
+      <!-- 獲得済みのクーポンを選んで、そのお店で支払う -->
+      <button class="sheet-btn pay-coupon-btn">クーポンを使う</button>
+    </section>
+
+    <!-- QRを読み取る：お店に置いてあるQRコードをカメラで読む -->
+    <section class="pay-panel pay-scan" hidden>
+      <div class="scan-box">
+        <video class="scan-video" playsinline muted></video>
+        <div class="scan-frame" aria-hidden="true"></div>
+        <!-- カメラの状態（準備中・使えないときの案内）は js/page-pay.js で書きかわる -->
+        <div class="scan-message"></div>
+      </div>
+      <p class="pay-note">お店のレジや入口にある桑都ペイのQRコードを、枠の中に入れてください</p>
+      <button class="sheet-btn pay-coupon-btn">クーポンを使う</button>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>ホーム</span>
+    </a>
+    <a href="shops.html?sort=near" class="nav-item nav-near">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <span>近くのお店</span>
+    </a>
+    <a href="pay.html" class="nav-item pay-nav active">
+      <div class="pay-circle">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
+      </div>
+      <span>支払う</span>
+    </a>
+    <button class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>アカウント</span>
+    </button>
+  </nav>
+<!-- QRコードを作るライブラリと、読み取るライブラリ（読み取りは BarcodeDetector が使えないブラウザのときだけ使う） -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- 読み込む順番を変えないでください（上のファイルを下のファイルが使います） -->
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/state.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/ui-coupon.js"></script>
+<script src="js/ui-merchant.js"></script>
+<script src="js/ui-pay.js"></script>
+<script src="js/page-pay.js"></script>
+</body>
+</html>

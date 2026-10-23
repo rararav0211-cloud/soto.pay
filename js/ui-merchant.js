@@ -1,8 +1,8 @@
 // ════════════════════════════════════════
 //  ui-merchant.js … 加盟店まわり（加盟店一覧・スタンプラリーで使う）
 //  ・COUPONS と SHOPS をまとめて「加盟店」の一覧にする
-//  ・スタンプラリーの対象かどうか・スタンプの有無
-//  ・加盟店の詳細パネル
+//  ・スタンプラリーの対象のお店とスタンプの数
+//  ・加盟店の詳細パネル（ここから支払い・予約へ進める）
 // ════════════════════════════════════════
 'use strict';
 
@@ -73,26 +73,12 @@ function buildMerchants() {
 // ════════════════════════════
 //  スタンプラリー
 // ════════════════════════════
-// STAMP_RALLY.spots の1件が、この加盟店のことかどうか
-function isSameSpot(spot, m) {
-  return (spot.shop && m.shop && m.shop.id === spot.shop) ||
-    (spot.coupon && m.coupon && m.coupon.id === spot.coupon);
-}
-
 // 対象のお店を、STAMP_RALLY.spots に書いた順で取り出す
 function getStampSpots() {
   const merchants = buildMerchants();
   return STAMP_RALLY.spots
     .map((spot) => merchants.find((m) => isSameSpot(spot, m)))
     .filter(Boolean); // 見つからないもの（書き間違いなど）は外す
-}
-
-function isStampSpot(m) {
-  return STAMP_RALLY.spots.some((spot) => isSameSpot(spot, m));
-}
-
-function hasStamp(m) {
-  return Boolean(stampData.stamps[m.key]);
 }
 
 function getStampCount() {
@@ -113,9 +99,6 @@ function createStampBox(m) {
     if (m.area === 'takao') {
       box.append(el('p', 'tour-box-text', `${TOUR_ORIGIN}エリアでの支払いなので、回遊クーポンも届きます。`));
     }
-    const btn = el('button', 'tour-box-btn stamp-btn', 'ここで支払う');
-    btn.addEventListener('click', () => addStamp(m));
-    box.append(btn);
   }
 
   const link = el('a', 'tour-box-link', `スタンプカードを見る（${getStampCount()} / ${getStampSpots().length}）`);
@@ -128,7 +111,7 @@ function createStampBox(m) {
 //  加盟店の詳細（下から出るパネル）
 // ════════════════════════════
 function openMerchant(m) {
-  openSheet(() => fillMerchant(m), true); // クーポンやスタンプを獲得したら描き直す
+  openSheet(() => fillMerchant(m), true); // クーポンを獲得したら描き直す
 }
 
 // 「このお店で使えるクーポン」の枠
@@ -149,6 +132,8 @@ function createMerchantCouponBox(coupon) {
     box.append(el('p', 'tour-box-text', `${TOUR_ORIGIN}で桑都ペイを使うと解放されます。`));
   } else if (status === 'expired') {
     box.append(el('p', 'tour-box-text', '回遊クーポンの期限が切れました。'));
+  } else if (status === 'acquired') {
+    box.append(el('p', 'tour-box-text', 'このお店で桑都ペイを使うと、自動で割引されます。'));
   }
 
   const actions = el('div', 'tour-box-actions');
@@ -156,8 +141,8 @@ function createMerchantCouponBox(coupon) {
     const getBtn = el('button', 'tour-box-btn', 'クーポンを獲得する');
     getBtn.addEventListener('click', () => acquireCoupon(coupon)); // render() でこのパネルも描き直される
     actions.append(getBtn);
-  } else if (status === 'acquired') {
-    const done = el('button', 'tour-box-btn is-done', '✓ 獲得済み');
+  } else if (status === 'acquired' || status === 'used') {
+    const done = el('button', 'tour-box-btn is-done', status === 'used' ? '使用済み' : '✓ 獲得済み');
     done.disabled = true;
     actions.append(done);
   }
@@ -194,9 +179,14 @@ function fillMerchant(m) {
   // スタンプラリーの対象のお店
   if (isStampSpot(m)) sheet.append(createStampBox(m));
 
+  // このお店で支払う（支払い画面へ）
+  const payBtn = el('button', 'sheet-btn', 'このお店で支払う');
+  payBtn.addEventListener('click', () => openPay({ merchant: m }));
+  sheet.append(payBtn);
+
   // 予約できるお店
   if (m.shop) {
-    const link = el('a', 'sheet-btn sheet-btn-link', 'このお店を予約する');
+    const link = el('a', 'sheet-link', 'このお店を予約する');
     link.href = `reserve.html?type=${m.shop.type}&shop=${m.shop.id}`;
     sheet.append(link);
   }
