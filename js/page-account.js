@@ -11,7 +11,7 @@
   const reservationBox = document.querySelector('.account-reservations');
   const menu = document.querySelector('.account-menu');
   const demoBox = document.querySelector('.account-demo');
-  let showPast = false; // 過去・キャンセルした予約を開いているか
+  let showPast = false; // 予約履歴（来店日を過ぎた予約・キャンセルした予約）を開いているか
 
   // ════════════════════════════
   //  会員情報
@@ -79,7 +79,7 @@
 
   function renderReservations() {
     reservationBox.replaceChildren();
-    // これからの予約は日にちの近い順、過去・キャンセルは新しい順
+    // これからの予約は日にちの近い順、予約履歴は新しい順
     const upcoming = reservations.filter(isUpcomingReservation)
       .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
     const past = reservations.filter((r) => !isUpcomingReservation(r))
@@ -96,7 +96,7 @@
 
     if (past.length > 0) {
       const toggle = el('button', 'tour-box-link account-past-toggle',
-        `${showPast ? '▲' : '▼'} 過去・キャンセルした予約（${past.length}件）`);
+        `${showPast ? '▲' : '▼'} 予約履歴（${past.length}件）`);
       toggle.addEventListener('click', () => {
         showPast = !showPast;
         renderReservations();
