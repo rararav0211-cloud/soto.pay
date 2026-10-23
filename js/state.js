@@ -241,15 +241,41 @@ function getUsableCoupon(coupon, amount) {
 // ════════════════════════════
 const reservations = load(KEYS.reservations, []);
 
+// 予約の日時を「10月25日(土) 12:00」「10月25日(土)から1泊」の形にする
+function getReservationWhen(r) {
+  return r.nights ? `${formatDate(r.date)}から${r.nights}泊` : `${formatDate(r.date)} ${r.time}`;
+}
+
+// これからの予約か（キャンセルしておらず、今日以降）
+function isUpcomingReservation(r) {
+  return !r.canceledAt && r.date >= todayString();
+}
+
 // 予約を保存して、お知らせとポイントを出す
 function addReservation(shop, reservation) {
   reservations.push(reservation);
   save(KEYS.reservations, reservations);
-  const when = shop.type === 'stay'
-    ? `${formatDate(reservation.date)}から${reservation.nights}泊`
-    : `${formatDate(reservation.date)} ${reservation.time}`;
-  addNotice('reserve', '予約が完了しました', `${shop.name}　${when}・${reservation.people}名（予約番号 ${reservation.id}）`);
+  addNotice('reserve', '予約が完了しました', `${shop.name}　${getReservationWhen(reservation)}・${reservation.people}名（予約番号 ${reservation.id}）`);
   addPoints(reservation.points, `${shop.name}の予約`);
+}
+
+// 予約をキャンセルする。もらったポイントは差し引く（保有ポイントより多くは引かない）
+function cancelReservation(id) {
+  const r = reservations.find((item) => item.id === id);
+  if (!r || !isUpcomingReservation(r)) return false;
+  r.canceledAt = Date.now();
+  save(KEYS.reservations, reservations);
+
+  const minus = Math.min(r.points || 0, pointData.balance);
+  if (minus > 0) {
+    pointData.balance -= minus;
+    pointData.history.push({ label: `${r.shopName}の予約のキャンセル`, amount: -minus, at: Date.now() });
+    save(KEYS.points, pointData);
+  }
+  addNotice('reserve', '予約をキャンセルしました',
+    `${r.shopName}　${getReservationWhen(r)}・${r.people}名（予約番号 ${r.id}）${minus > 0 ? `\n予約でもらった${minus.toLocaleString()}ptを差し引きました。` : ''}`);
+  render();
+  return true;
 }
 
 // ════════════════════════════

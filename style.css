@@ -2643,3 +2643,246 @@ a.action-btn {
   text-align: center;
   white-space: pre-line;
 }
+
+/* ════════════════════════════
+   アカウント（account.html）
+   ════════════════════════════ */
+.account-card {
+  margin: 16px 16px 0;
+  padding: 22px 20px 20px;
+  border-radius: var(--radius-card);
+  background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-light) 60%, #5AC48A 100%);
+  box-shadow: var(--shadow-card);
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-avatar {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-name {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.account-id {
+  font-size: 12px;
+  opacity: 0.85;
+  letter-spacing: 0.04em;
+}
+
+.account-nums {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.account-num {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.account-num-label {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.account-num strong {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.account-card .action-btn {
+  padding: 10px 8px;
+  font-size: 13px;
+}
+
+/* 予約 */
+.account-reservations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-reservation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: var(--gray-100);
+  border-radius: 12px;
+}
+
+.account-reservation.is-past {
+  opacity: 0.6;
+}
+
+.account-reservation-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-reservation-head .shop-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.account-reservation-head .shop-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.account-reservation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-reservation .coupon-category {
+  background: var(--white);
+}
+
+.account-reservation-when {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.account-reservation-detail {
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.account-cancel {
+  align-self: flex-end;
+  padding: 4px 0;
+  color: #C62828;
+}
+
+.coupon-badge.is-canceled {
+  background: #C62828;
+}
+
+.account-past-toggle {
+  align-self: center;
+}
+
+.sheet .account-cancel-btn {
+  background: #C62828;
+}
+
+.account-back {
+  width: 100%;
+  background: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer;
+}
+
+/* 履歴・特典のメニュー */
+.account-menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 2px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--gray-200);
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  text-decoration: none;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.account-row:last-child {
+  border-bottom: none;
+}
+
+.account-row-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-row-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.account-row-sub {
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+/* ポイント履歴 */
+.account-point-total {
+  text-align: center;
+}
+
+.account-point-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--gray-100);
+  border-radius: 10px;
+}
+
+.account-point-row .notice-time {
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+.account-point-amount {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 900;
+  color: #1565C0;
+}
+
+.account-point-amount.is-minus {
+  color: #C62828;
+}
+
+/* デモのリセット */
+.account-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 20px 16px 0;
+}
+
+.account-reset {
+  color: var(--gray-400);
+}
