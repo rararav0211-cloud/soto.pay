@@ -2609,3 +2609,10 @@ a.action-btn {
   font-family: 'Noto Sans JP', sans-serif;
   cursor: pointer;
 }
+
+/* 「スタッフが操作しますので触れないでください。」は長いので、少し小さくして2行にもできるようにする */
+.sheet .use-staff-btn {
+  padding: 14px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}

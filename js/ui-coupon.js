@@ -151,7 +151,7 @@ function fillDetail(coupon) {
   steps.append(
     el('li', '', '「獲得する」を押してクーポンを受け取ります'),
     el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます'),
-    el('li', '', 'または「このクーポンを使う」を押して、お店の人に画面を見せます')
+    el('li', '', 'または「このクーポンを使う」を押して、スタッフに画面を見せます')
   );
   howto.append(steps);
 
@@ -180,7 +180,7 @@ function fillDetail(coupon) {
 
 // ════════════════════════════
 //  クーポン使用画面
-//  お客様はこの画面をお店の人に見せ、「使用する」はお店の人が押す
+//  お客様はこの画面をスタッフに見せ、使用のボタンはスタッフが押す
 //  1. 使用画面 → 2. 確認（取り消せない） → 3. 使用済み
 // ════════════════════════════
 function openCouponUse(coupon) {
@@ -209,11 +209,11 @@ function openCouponUse(coupon) {
 
     const notice = el('div', 'use-staff-notice');
     notice.append(
-      el('p', 'use-staff-title', 'この画面をお店の人に見せてください'),
-      el('p', 'use-staff-text', '「使用する」ボタンは、お店の人が操作してください。お客様が押すと、クーポンが使えなくなります。')
+      el('p', 'use-staff-title', 'この画面をスタッフに見せてください'),
+      el('p', 'use-staff-text', '下のボタンはスタッフが操作します。お客様が押すと、クーポンが使えなくなります。')
     );
 
-    const btn = el('button', 'sheet-btn use-staff-btn', '使用する（お店の人が操作）');
+    const btn = el('button', 'sheet-btn use-staff-btn', 'スタッフが操作しますので触れないでください。');
     btn.addEventListener('click', fillConfirm);
 
     sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポン使用画面'), createTicket(), notice, btn);
@@ -229,7 +229,7 @@ function openCouponUse(coupon) {
     });
     const cancel = el('button', 'sheet-link use-cancel', 'もどる');
     cancel.addEventListener('click', fillUse);
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'お店の人の確認'), createTicket(), text, ok, cancel);
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'スタッフの確認'), createTicket(), text, ok, cancel);
   }
 
   // 3. 使用済み
@@ -246,7 +246,7 @@ function openCouponUse(coupon) {
     closeBtn.addEventListener('click', closeSheet);
     sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
       el('h2', 'sheet-title reserve-done-title', 'クーポンを使用しました'), ticket, info,
-      el('p', 'sheet-desc', 'お店の人がこの画面を確認したら、閉じてください。'), closeBtn);
+      el('p', 'sheet-desc', 'スタッフがこの画面を確認したら、閉じてください。'), closeBtn);
   }
 
   openSheet(fillUse, false);
