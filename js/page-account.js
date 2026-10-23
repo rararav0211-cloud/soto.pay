@@ -96,7 +96,7 @@
 
     if (past.length > 0) {
       const toggle = el('button', 'tour-box-link account-past-toggle',
-        `${showPast ? '▲' : '▼'} 予約履歴（${past.length}件）`);
+        `${showPast ? '▲' : '▼'} 予約履歴`);
       toggle.addEventListener('click', () => {
         showPast = !showPast;
         renderReservations();
