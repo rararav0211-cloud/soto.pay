@@ -2354,7 +2354,7 @@ a.action-btn {
   margin-right: 2px;
 }
 
-.pay-demo-btn {
+.pay-coupon-btn {
   margin-top: 0;
 }
 
@@ -2446,4 +2446,52 @@ a.action-btn {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+/* 支払いページの「クーポンを使う」の一覧 */
+.pay-coupon-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: var(--green-pale);
+  border: 1.5px dashed var(--green-primary);
+  border-radius: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pay-coupon-row.is-tour {
+  background: #FFF7E6;
+  border-color: #E08A00;
+}
+
+.pay-coupon-discount {
+  flex-shrink: 0;
+  width: 78px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green-primary);
+}
+
+.pay-coupon-discount span {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.pay-coupon-row.is-tour .pay-coupon-discount {
+  color: #C06F00;
+}
+
+.pay-coupon-row .coupon-category {
+  background: var(--white);
+}
+
+.pay-coupon-arrow {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: var(--gray-400);
 }

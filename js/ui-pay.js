@@ -286,6 +286,57 @@ function createPayCouponBox(m, amount, onChange) {
 }
 
 // ════════════════════════════
+//  クーポンを使う
+//  獲得済み（まだ使っていない）クーポンの一覧を出し、選んだクーポンのお店への支払い画面を開く
+// ════════════════════════════
+// 今使えるクーポンと、そのお店 [{ coupon, merchant }]
+function getUsableCoupons() {
+  const merchants = buildMerchants();
+  return COUPONS
+    .filter((coupon) => getStatus(coupon) === 'acquired')
+    .map((coupon) => ({ coupon, merchant: merchants.find((m) => m.coupon && m.coupon.id === coupon.id) }))
+    .filter((item) => item.merchant);
+}
+
+function openCouponPay() {
+  function fill() {
+    resetSheet('クーポンを使う');
+    const items = getUsableCoupons();
+
+    const list = el('div', 'pay-shop-list');
+    if (items.length === 0) {
+      list.append(el('p', 'notice-empty', '使えるクーポンがありません'));
+      const link = el('a', 'sheet-link', 'クーポン一覧でクーポンを獲得する');
+      link.href = 'coupons.html';
+      list.append(link);
+    }
+
+    items.forEach(({ coupon, merchant }) => {
+      const row = el('button', coupon.kind === 'tour' ? 'pay-coupon-row is-tour' : 'pay-coupon-row');
+      const discount = el('p', 'pay-coupon-discount');
+      discount.append(el('span', '', coupon.discount.toLocaleString()), '円引き');
+
+      const info = el('div', 'pay-shop-info');
+      const labels = el('div', 'coupon-labels');
+      if (coupon.kind === 'tour') labels.append(el('span', 'coupon-badge', '回遊'));
+      labels.append(el('span', 'coupon-category', AREAS[merchant.area]));
+      info.append(labels, el('p', 'pay-shop-name', merchant.name), el('p', 'pay-shop-genre', getConditionText(coupon)));
+      if (coupon.kind === 'tour') info.append(el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`));
+
+      row.append(discount, info, el('span', 'pay-coupon-arrow', '›'));
+      row.addEventListener('click', () => openPay({ merchant }));
+      list.append(row);
+    });
+
+    const lead = el('p', 'sheet-desc', items.length > 0
+      ? '使うクーポンを選んでください。そのお店での支払いで自動で割引されます。'
+      : 'クーポン一覧で「獲得する」を押すと、ここから使えるようになります。');
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポンを使う'), lead, list);
+  }
+  openSheet(fill, false);
+}
+
+// ════════════════════════════
 //  QRコード
 //  お店のQRコードの中身は「SOTOPAY:SHOP:加盟店の key」
 //  （pay.html で読み取ると、そのお店への支払い画面が開く）

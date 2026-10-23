@@ -2,6 +2,7 @@
 //  page-pay.js … 支払いページ（pay.html）だけで使う処理
 //  ・コードを見せる：自分の支払いコード（QR）を出して、お店に読み取ってもらう
 //  ・QRを読み取る ：カメラでお店のQRコードを読み、そのお店への支払い画面を開く
+//  ・クーポンを使う：獲得済みのクーポンを選び、そのお店への支払い画面を開く
 //  pay.html?mode=scan で開くと、最初から「QRを読み取る」になる
 // ════════════════════════════════════════
 'use strict';
@@ -47,8 +48,6 @@
 
   document.querySelector('.pay-code-renew').addEventListener('click', renewCode);
 
-  // デモ：お店がコードを読み取った、という想定で、お店と金額を選ぶ画面を開く
-  document.querySelector('.pay-demo-store').addEventListener('click', () => openPay());
 
   // ════════════════════════════
   //  QRを読み取る
@@ -165,11 +164,28 @@
     openPay({ merchant: m });
   }
 
-  document.querySelector('.pay-demo-select').addEventListener('click', () => {
-    stopScan();
-    showScanMessage('お店を選んで支払っています', true);
-    openPay();
-  });
+  // ════════════════════════════
+  //  クーポンを使う（両方のタブにあるボタン）
+  //  獲得済みのクーポンを選ぶと、そのお店への支払い画面が開く
+  // ════════════════════════════
+  const couponButtons = document.querySelectorAll('.pay-coupon-btn');
+
+  couponButtons.forEach((btn) => btn.addEventListener('click', () => {
+    if (mode === 'scan') {
+      stopScan();
+      showScanMessage('クーポンを選んでいます', true);
+    }
+    openCouponPay();
+  }));
+
+  // ボタンに使えるクーポンの枚数を出す
+  function updateCouponButtons() {
+    const count = getUsableCoupons().length;
+    couponButtons.forEach((btn) => {
+      btn.textContent = count > 0 ? `クーポンを使う（${count}枚）` : 'クーポンを使う';
+    });
+  }
+  onRender(updateCouponButtons);
 
   // ════════════════════════════
   //  タブの切り替え
