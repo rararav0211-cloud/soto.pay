@@ -1,7 +1,8 @@
 // ════════════════════════════════════════
 //  ui-common.js … どのページにもある部品
 //  ・ヘッダーのベルマーク（お知らせの一覧）
-//  ※ これから作る「支払う」の画面もここに置く予定
+//  ・チャージの画面（ホームのチャージボタン・支払いで残高が足りないとき）
+//  ※ 支払いの画面は ui-pay.js
 // ════════════════════════════════════════
 'use strict';
 
@@ -60,3 +61,54 @@ function openNotices(title = 'お知らせ', types = Object.keys(NOTICE_TYPES)) 
 document.querySelectorAll('.notification-btn').forEach((btn) => {
   btn.addEventListener('click', () => openNotices());
 });
+
+// ════════════════════════════
+//  チャージ
+//  onDone … 渡されたら、完了画面のボタンが「支払いに戻る」になり、押すと onDone を呼ぶ
+//  needed … 渡されたら、その金額以上になる一番小さい額を最初から選んでおく
+// ════════════════════════════
+const CHARGE_AMOUNTS = [1000, 3000, 5000, 10000];
+
+function openCharge(onDone, needed = 0) {
+  let selected = CHARGE_AMOUNTS.find((amount) => amount >= needed) || CHARGE_AMOUNTS[CHARGE_AMOUNTS.length - 1];
+
+  function fillForm() {
+    resetSheet('チャージ');
+
+    const now = el('p', 'sheet-desc');
+    now.append('現在の残高：', el('strong', '', `${wallet.balance.toLocaleString()}円`));
+
+    const grid = el('div', 'charge-grid');
+    CHARGE_AMOUNTS.forEach((amount) => {
+      const btn = el('button', amount === selected ? 'charge-option active' : 'charge-option', `${amount.toLocaleString()}円`);
+      btn.addEventListener('click', () => {
+        selected = amount;
+        fillForm();
+      });
+      grid.append(btn);
+    });
+
+    const after = el('p', 'charge-after', `チャージ後の残高：${(wallet.balance + selected).toLocaleString()}円`);
+
+    const submit = el('button', 'sheet-btn', `${selected.toLocaleString()}円をチャージする`);
+    submit.addEventListener('click', () => {
+      chargeWallet(selected);
+      fillDone();
+    });
+
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'チャージ'), now, grid, after, submit);
+  }
+
+  function fillDone() {
+    resetSheet('チャージ完了');
+    const info = el('dl', 'sheet-info');
+    info.append(el('dt', '', 'チャージ額'), el('dd', '', `${selected.toLocaleString()}円`),
+      el('dt', '', '残高'), el('dd', '', `${wallet.balance.toLocaleString()}円`));
+    const nextBtn = el('button', 'sheet-btn', onDone ? '支払いに戻る' : '閉じる');
+    nextBtn.addEventListener('click', onDone || closeSheet);
+    sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
+      el('h2', 'sheet-title reserve-done-title', 'チャージが完了しました'), info, nextBtn);
+  }
+
+  openSheet(fillForm, false);
+}

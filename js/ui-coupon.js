@@ -10,6 +10,7 @@
 const BUTTON_TEXT = {
   available: '獲得する',
   acquired: '獲得済み',
+  used: '使用済み',
   locked: '未解放',
   expired: '期限切れ',
 };
@@ -26,6 +27,7 @@ function getExpiryText(coupon, status) {
   if (coupon.kind !== 'tour') return 'なし';
   if (status === 'locked') return `${TOUR_ORIGIN}で支払った日の23:59まで`;
   if (status === 'expired') return '期限切れ';
+  if (status === 'used') return '使用済み';
   return `本日${formatTime(tour.expiresAt)}まで`;
 }
 
@@ -47,7 +49,7 @@ function createCouponCard(coupon, isRow) {
   card.dataset.category = coupon.category;
   card.dataset.status = status;
   if (coupon.kind === 'tour') card.classList.add('is-tour');
-  if (status === 'locked' || status === 'expired') card.classList.add('is-inactive');
+  if (status === 'locked' || status === 'expired' || status === 'used') card.classList.add('is-inactive');
 
   const name = el('p', 'coupon-name', coupon.name);
   const discount = createDiscount('coupon-discount', coupon);
@@ -73,6 +75,8 @@ function createCouponCard(coupon, isRow) {
       note = el('p', 'coupon-note', `${TOUR_ORIGIN}で支払うと解放`);
     } else if (status === 'expired') {
       note = el('p', 'coupon-note', '有効期限が切れました');
+    } else if (status === 'used') {
+      note = el('p', 'coupon-note', '使用済みです');
     } else {
       note = el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`);
     }
@@ -210,11 +214,9 @@ function renderBanners() {
         ? '前回の回遊クーポンは期限が切れました。もう一度高尾山で使うと再配信されます。'
         : `${TOUR_ORIGIN}で桑都ペイを使うと、その日限りの「回遊」クーポンが解放されます。`)
     );
+    // 高尾山エリアのお店だけを出した支払い画面を開く
     const demoBtn = el('button', 'tour-demo-btn', `${TOUR_ORIGIN}で支払う`);
-    demoBtn.addEventListener('click', () => {
-      addNotice('payment', '支払いが完了しました', `${TOUR_ORIGIN}で桑都ペイを使いました。${TOUR_DESTINATION}の回遊クーポンが届きました。`);
-      unlockTour();
-    });
+    demoBtn.addEventListener('click', () => openPay({ area: 'takao' }));
     banner.append(demoBtn);
   });
 }

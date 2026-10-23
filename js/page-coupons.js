@@ -27,7 +27,7 @@
       const matchStatus =
         currentFilter === 'all' ||
         (currentFilter === 'available' && status === 'available') ||
-        (currentFilter === 'acquired' && status === 'acquired');
+        (currentFilter === 'acquired' && (status === 'acquired' || status === 'used'));
       const matchCategory =
         currentCategory === 'all' || card.dataset.category === currentCategory;
       const visible = matchStatus && matchCategory;
