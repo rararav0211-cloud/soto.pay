@@ -16,6 +16,7 @@ const KEYS = {
   reservations: 'sotoPayReservations',  // 予約
   stamps:       'sotoPayStamps',        // スタンプラリー
   payments:     'sotoPayPayments',      // 支払いの記録
+  user:         'sotoPayUser',          // 利用者の番号（支払いコードに使う）
   demoSeeded:   'sotoPayDemoSeeded',    // デモ用の履歴を入れたかどうか
 };
 
@@ -285,6 +286,10 @@ function claimReward(reward) {
 // ════════════════════════════
 // [{ id, key, name, amount, discount, couponId, paid, at }]
 const payments = load(KEYS.payments, []);
+
+// 利用者の番号（初めて開いたときに1回だけ作る。本番ではログインした人の番号になる）
+const user = load(KEYS.user, null) || { id: String(Math.floor(Math.random() * 1e8)).padStart(8, '0') };
+save(KEYS.user, user);
 
 // 支払う前の計算（画面の「お支払い額」の表示にも使う）
 //  m … 加盟店（buildMerchants の1件） / amount … お会計の金額

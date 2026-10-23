@@ -1,6 +1,6 @@
 // ════════════════════════════════════════
 //  ui-pay.js … 支払いの画面（どのページからも開ける）
-//  1. お店を選ぶ（本番ではお店のQRコードを読み取る）
+//  1. お店を選ぶ（お店のQRコードを読み取ったときは飛ばす）
 //  2. 金額を入れる（使えるクーポンは自動で割引）
 //  3. 支払い完了（スタンプ・回遊クーポンのお知らせ）
 //  支払いの計算と記録は state.js の pay() が行う
@@ -10,7 +10,7 @@
 const PAY_PRESETS = [500, 1000, 3000, 5000]; // 金額をすぐ入れられるボタン
 const PAY_MAX = 100000;                      // 1回に払える上限（デモ用）
 
-// options.merchant … 最初からこのお店で払う（加盟店詳細から開いたとき）
+// options.merchant … 最初からこのお店で払う（加盟店詳細・QRの読み取りから開いたとき）
 // options.area     … このエリアのお店だけを選べるようにする（回遊バナーから開いたとき）
 function openPay(options = {}) {
   let merchant = options.merchant || null;
@@ -285,7 +285,34 @@ function createPayCouponBox(m, amount, onChange) {
   return box;
 }
 
-// ボトムナビの「支払う」と、ホームの「支払う」ボタン
-document.querySelectorAll('.pay-nav, .pay-btn').forEach((btn) => {
-  btn.addEventListener('click', () => openPay());
-});
+// ════════════════════════════
+//  QRコード
+//  お店のQRコードの中身は「SOTOPAY:SHOP:加盟店の key」
+//  （pay.html で読み取ると、そのお店への支払い画面が開く）
+// ════════════════════════════
+const SHOP_QR_PREFIX = 'SOTOPAY:SHOP:';
+
+function getShopQrText(m) {
+  return `${SHOP_QR_PREFIX}${m.key}`;
+}
+
+// 読み取った文字からお店を探す（桑都ペイのお店のQRでなければ null）
+function findMerchantByQr(text) {
+  if (!text || !text.startsWith(SHOP_QR_PREFIX)) return null;
+  const key = text.slice(SHOP_QR_PREFIX.length);
+  return buildMerchants().find((m) => m.key === key) || null;
+}
+
+// box の中に、text を表すQRコードを描く
+//  QRコードを作るライブラリ（qrcode-generator）が読み込めなかったときは案内を出す
+function renderQr(box, text) {
+  if (typeof qrcode === 'undefined') {
+    box.replaceChildren(el('p', 'map-error', 'QRコードを表示できませんでした。通信環境を確認してください。'));
+    return;
+  }
+  const qr = qrcode(0, 'M'); // 0 … 大きさは自動 / 'M' … 少し汚れても読める強さ
+  qr.addData(text);
+  qr.make();
+  // ライブラリが作る SVG（中身は QR の四角だけ）をそのまま入れている
+  box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+}
