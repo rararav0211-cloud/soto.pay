@@ -2598,21 +2598,85 @@ a.action-btn {
   color: var(--gray-700);
 }
 
-.sheet .use-staff-btn,
-.sheet.is-tour .use-staff-btn {
+
+/* ── スライドして決める部品 ── */
+.slide-track {
+  position: relative;
+  height: 64px;
+  border-radius: 32px;
   background: var(--gray-700);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.use-cancel {
-  width: 100%;
-  background: none;
-  font-family: 'Noto Sans JP', sans-serif;
-  cursor: pointer;
+/* つまみが通ったあとの色 */
+.slide-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--green-primary);
 }
 
-/* 「スタッフが操作しますので触れないでください。」は長いので、少し小さくして2行にもできるようにする */
-.sheet .use-staff-btn {
-  padding: 14px 12px;
-  font-size: 14px;
+.slide-text {
+  position: absolute;
+  inset: 0 16px 0 68px; /* 左はつまみの分あける */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.4;
+  color: var(--white);
+  text-align: center;
+  white-space: pre-line; /* 文字の中の改行（\n）で改行する */
+  pointer-events: none;
+}
+
+.slide-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--gray-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  touch-action: none; /* 指で動かすときに画面がスクロールしないように */
+}
+
+.slide-knob:focus-visible {
+  outline: 3px solid var(--green-light);
+  outline-offset: 2px;
+}
+
+.slide-track.is-dragging .slide-knob {
+  cursor: grabbing;
+}
+
+/* 指を離したときは、なめらかに戻る */
+.slide-track:not(.is-dragging) .slide-knob,
+.slide-track:not(.is-dragging) .slide-fill {
+  transition: transform 0.25s ease-out, width 0.25s ease-out;
+}
+
+.slide-track.is-done .slide-knob {
+  color: var(--green-primary);
+}
+
+.use-slide-note {
+  margin-top: -4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--gray-400);
+  text-align: center;
+  white-space: pre-line;
 }

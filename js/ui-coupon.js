@@ -179,12 +179,93 @@ function fillDetail(coupon) {
 }
 
 // ════════════════════════════
+//  スライドして決める部品（まちがえて押さないように、ボタンではなくスライドにする）
+//  label      … スライドの中に出す文字（\n のところで改行する）
+//  onComplete … 右はしまでスライドしたときに呼ぶ
+// ════════════════════════════
+function createSlider(label, onComplete) {
+  const track = el('div', 'slide-track');
+  const fill = el('div', 'slide-fill');
+  const text = el('span', 'slide-text', label);
+  const knob = el('button', 'slide-knob');
+  knob.type = 'button';
+  knob.setAttribute('aria-label', `${label.replace('\n', '')}（右にスライド）`);
+  // 矢印のアイコン（固定の SVG だけなので innerHTML を使っている）
+  knob.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+  track.append(fill, text, knob);
+
+  const GAP = 4;    // つまみとふちのすき間（CSS の top / left と同じ）
+  let x = 0;        // つまみの位置
+  let startX = 0;   // ドラッグを始めたときの、指の位置とつまみの位置の差
+  let dragging = false;
+  let done = false;
+
+  // つまみが動ける一番右の位置
+  function getMax() {
+    return track.clientWidth - knob.offsetWidth - GAP * 2;
+  }
+
+  function moveTo(value) {
+    const max = getMax();
+    x = Math.max(0, Math.min(value, max));
+    knob.style.transform = `translateX(${x}px)`;
+    fill.style.width = `${x + knob.offsetWidth + GAP}px`;
+    text.style.opacity = String(1 - (x / max) * 0.9); // 右へ行くほど文字を薄く
+  }
+
+  function finish() {
+    if (x >= getMax() * 0.9) {
+      // 右はしまで来たら決定
+      done = true;
+      moveTo(getMax());
+      track.classList.add('is-done');
+      if (navigator.vibrate) navigator.vibrate(60);
+      setTimeout(onComplete, 250); // 右はしに着いたのが見えてから次へ
+    } else {
+      moveTo(0); // 途中で離したら左に戻る
+    }
+  }
+
+  knob.addEventListener('pointerdown', (e) => {
+    if (done) return;
+    dragging = true;
+    startX = e.clientX - x;
+    knob.setPointerCapture(e.pointerId);
+    track.classList.add('is-dragging');
+  });
+  knob.addEventListener('pointermove', (e) => {
+    if (dragging) moveTo(e.clientX - startX);
+  });
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('is-dragging');
+    finish();
+  }
+  knob.addEventListener('pointerup', endDrag);
+  knob.addEventListener('pointercancel', endDrag);
+
+  // キーボードでも操作できるようにする（→キーで少しずつ、End で右はし）
+  knob.addEventListener('keydown', (e) => {
+    if (done) return;
+    if (e.key === 'ArrowRight') moveTo(x + getMax() / 5);
+    else if (e.key === 'ArrowLeft') moveTo(x - getMax() / 5);
+    else if (e.key === 'End') moveTo(getMax());
+    else return;
+    e.preventDefault();
+    if (x >= getMax()) finish();
+  });
+
+  return track;
+}
+
+// ════════════════════════════
 //  クーポン使用画面
-//  お客様はこの画面をスタッフに見せ、使用のボタンはスタッフが押す
-//  1. 使用画面 → 2. 確認（取り消せない） → 3. 使用済み
+//  お客様はこの画面をスタッフに見せ、使用のスライドはスタッフが動かす
+//  1. 使用画面（スライドで使用） → 2. 使用済み
 // ════════════════════════════
 function openCouponUse(coupon) {
-  // クーポンの中身（3つの画面で共通）
+  // クーポンの中身（2つの画面で共通）
   function createTicket() {
     const ticket = el('div', coupon.kind === 'tour' ? 'use-ticket is-tour' : 'use-ticket');
     const labels = el('div', 'coupon-labels');
@@ -210,29 +291,18 @@ function openCouponUse(coupon) {
     const notice = el('div', 'use-staff-notice');
     notice.append(
       el('p', 'use-staff-title', 'この画面をスタッフに見せてください'),
-      el('p', 'use-staff-text', '下のボタンはスタッフが操作します。お客様が押すと、クーポンが使えなくなります。')
+      el('p', 'use-staff-text', '下のスライドはスタッフが操作します。お客様が動かすと、クーポンが使えなくなります。')
     );
 
-    const btn = el('button', 'sheet-btn use-staff-btn', 'スタッフが操作しますので触れないでください。');
-    btn.addEventListener('click', fillConfirm);
-
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポン使用画面'), createTicket(), notice, btn);
-  }
-
-  // 2. 確認
-  function fillConfirm() {
-    resetSheet('クーポンの使用の確認');
-    const text = el('p', 'sheet-desc', 'このクーポンを使用済みにします。この操作は取り消せません。');
-    const ok = el('button', 'sheet-btn use-staff-btn', '使用する');
-    ok.addEventListener('click', () => {
+    const slider = createSlider('スタッフが操作しますので\n触れないでください。', () => {
       if (useCoupon(coupon)) fillDone(Date.now());
     });
-    const cancel = el('button', 'sheet-link use-cancel', 'もどる');
-    cancel.addEventListener('click', fillUse);
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'スタッフの確認'), createTicket(), text, ok, cancel);
+    const staffNote = el('p', 'use-slide-note', 'スタッフの方へ：右にスライドすると使用済みになります。\n使用済みにすると取り消せません。');
+
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポン使用画面'), createTicket(), notice, slider, staffNote);
   }
 
-  // 3. 使用済み
+  // 2. 使用済み
   function fillDone(usedAt) {
     resetSheet('クーポン使用済み');
     const ticket = createTicket();
