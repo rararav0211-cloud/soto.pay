@@ -2495,3 +2495,117 @@ a.action-btn {
   font-size: 24px;
   color: var(--gray-400);
 }
+
+/* ════════════════════════════
+   クーポン使用画面
+   ════════════════════════════ */
+.notice-item.is-coupon .notice-icon { background: #E08A00; }
+
+.use-ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  background: var(--green-pale);
+  border: 2px dashed var(--green-primary);
+  border-radius: 16px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.use-ticket.is-tour {
+  background: #FFF7E6;
+  border-color: #E08A00;
+}
+
+.use-ticket .coupon-labels {
+  justify-content: center;
+}
+
+.use-ticket .coupon-category {
+  background: var(--white);
+}
+
+.use-ticket-shop {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.use-ticket-discount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green-primary);
+  line-height: 1.1;
+}
+
+.use-ticket-discount span {
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.use-ticket.is-tour .use-ticket-discount {
+  color: #C06F00;
+}
+
+.use-ticket-condition {
+  font-size: 12px;
+  color: var(--gray-700);
+}
+
+/* 使用済みのハンコ */
+.use-ticket.is-used > :not(.use-stamp) {
+  opacity: 0.45;
+}
+
+.use-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-14deg);
+  padding: 6px 18px;
+  border: 4px double #C62828;
+  border-radius: 10px;
+  color: #C62828;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* お店の人への案内 */
+.use-staff-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #FFF4E5;
+  border-left: 4px solid #E08A00;
+  border-radius: 8px;
+}
+
+.use-staff-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #8A4B00;
+}
+
+.use-staff-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.sheet .use-staff-btn,
+.sheet.is-tour .use-staff-btn {
+  background: var(--gray-700);
+}
+
+.use-cancel {
+  width: 100%;
+  background: none;
+  font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer;
+}

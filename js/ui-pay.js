@@ -287,7 +287,7 @@ function createPayCouponBox(m, amount, onChange) {
 
 // ════════════════════════════
 //  クーポンを使う
-//  獲得済み（まだ使っていない）クーポンの一覧を出し、選んだクーポンのお店への支払い画面を開く
+//  獲得済み（まだ使っていない）クーポンの一覧を出し、選んだクーポンの使用画面を開く
 // ════════════════════════════
 // 今使えるクーポンと、そのお店 [{ coupon, merchant }]
 function getUsableCoupons() {
@@ -324,12 +324,12 @@ function openCouponPay() {
       if (coupon.kind === 'tour') info.append(el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`));
 
       row.append(discount, info, el('span', 'pay-coupon-arrow', '›'));
-      row.addEventListener('click', () => openPay({ merchant }));
+      row.addEventListener('click', () => openCouponUse(coupon));
       list.append(row);
     });
 
     const lead = el('p', 'sheet-desc', items.length > 0
-      ? '使うクーポンを選んでください。そのお店での支払いで自動で割引されます。'
+      ? '使うクーポンを選ぶと、お店の人に見せる使用画面が開きます。'
       : 'クーポン一覧で「獲得する」を押すと、ここから使えるようになります。');
     sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポンを使う'), lead, list);
   }

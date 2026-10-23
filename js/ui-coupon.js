@@ -150,16 +150,19 @@ function fillDetail(coupon) {
   }
   steps.append(
     el('li', '', '「獲得する」を押してクーポンを受け取ります'),
-    el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます')
+    el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます'),
+    el('li', '', 'または「このクーポンを使う」を押して、お店の人に画面を見せます')
   );
   howto.append(steps);
 
-  // 獲得ボタン
+  // 獲得ボタン（獲得済みなら「このクーポンを使う」）
   const btn = el('button', 'sheet-btn', status === 'locked'
     ? `${TOUR_ORIGIN}で支払うと解放`
-    : BUTTON_TEXT[status]);
+    : status === 'acquired' ? 'このクーポンを使う' : BUTTON_TEXT[status]);
   if (status === 'available') {
     btn.addEventListener('click', () => acquireCoupon(coupon));
+  } else if (status === 'acquired') {
+    btn.addEventListener('click', () => openCouponUse(coupon));
   } else {
     btn.disabled = true;
   }
@@ -173,6 +176,80 @@ function fillDetail(coupon) {
     link.href = `reserve.html?type=${shop.type}&shop=${shop.id}`;
     sheet.append(link);
   }
+}
+
+// ════════════════════════════
+//  クーポン使用画面
+//  お客様はこの画面をお店の人に見せ、「使用する」はお店の人が押す
+//  1. 使用画面 → 2. 確認（取り消せない） → 3. 使用済み
+// ════════════════════════════
+function openCouponUse(coupon) {
+  // クーポンの中身（3つの画面で共通）
+  function createTicket() {
+    const ticket = el('div', coupon.kind === 'tour' ? 'use-ticket is-tour' : 'use-ticket');
+    const labels = el('div', 'coupon-labels');
+    if (coupon.kind === 'tour') labels.append(el('span', 'coupon-badge', '回遊'));
+    labels.append(el('span', 'coupon-category', getCategoryLabel(coupon.category)));
+    ticket.append(
+      labels,
+      el('p', 'use-ticket-shop', coupon.name),
+      createDiscount('use-ticket-discount', coupon),
+      el('p', 'use-ticket-condition', getConditionText(coupon))
+    );
+    if (coupon.kind === 'tour' && isTourActive()) {
+      ticket.append(el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`));
+    }
+    return ticket;
+  }
+
+  // 1. 使用画面
+  function fillUse() {
+    resetSheet('クーポン使用画面');
+    sheet.classList.toggle('is-tour', coupon.kind === 'tour');
+
+    const notice = el('div', 'use-staff-notice');
+    notice.append(
+      el('p', 'use-staff-title', 'この画面をお店の人に見せてください'),
+      el('p', 'use-staff-text', '「使用する」ボタンは、お店の人が操作してください。お客様が押すと、クーポンが使えなくなります。')
+    );
+
+    const btn = el('button', 'sheet-btn use-staff-btn', '使用する（お店の人が操作）');
+    btn.addEventListener('click', fillConfirm);
+
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'クーポン使用画面'), createTicket(), notice, btn);
+  }
+
+  // 2. 確認
+  function fillConfirm() {
+    resetSheet('クーポンの使用の確認');
+    const text = el('p', 'sheet-desc', 'このクーポンを使用済みにします。この操作は取り消せません。');
+    const ok = el('button', 'sheet-btn use-staff-btn', '使用する');
+    ok.addEventListener('click', () => {
+      if (useCoupon(coupon)) fillDone(Date.now());
+    });
+    const cancel = el('button', 'sheet-link use-cancel', 'もどる');
+    cancel.addEventListener('click', fillUse);
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', 'お店の人の確認'), createTicket(), text, ok, cancel);
+  }
+
+  // 3. 使用済み
+  function fillDone(usedAt) {
+    resetSheet('クーポン使用済み');
+    const ticket = createTicket();
+    ticket.classList.add('is-used');
+    ticket.append(el('span', 'use-stamp', '使用済み'));
+
+    const info = el('dl', 'sheet-info');
+    info.append(el('dt', '', '使用日時'), el('dd', '', formatDateTime(usedAt)));
+
+    const closeBtn = el('button', 'sheet-btn', '閉じる');
+    closeBtn.addEventListener('click', closeSheet);
+    sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
+      el('h2', 'sheet-title reserve-done-title', 'クーポンを使用しました'), ticket, info,
+      el('p', 'sheet-desc', 'お店の人がこの画面を確認したら、閉じてください。'), closeBtn);
+  }
+
+  openSheet(fillUse, false);
 }
 
 // ════════════════════════════

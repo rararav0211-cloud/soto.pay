@@ -41,6 +41,7 @@ const NOTICE_TYPES = {
   payment: { label: '支払い',   icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>' },
   points:  { label: 'ポイント', icon: '<circle cx="12" cy="12" r="9"/><path d="M9.5 16V8h3.2a2.4 2.4 0 0 1 0 4.8H9.5"/>' },
   charge:  { label: 'チャージ', icon: '<path d="M12 19V5M5 12l7-7 7 7"/>' },
+  coupon:  { label: 'クーポン', icon: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>' },
   reward:  { label: '特典',     icon: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>' },
   reserve: { label: '予約',     icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' },
 };
@@ -218,6 +219,15 @@ function markCouponUsed(coupon) {
     usedCoupons.push(coupon.id);
     save(KEYS.usedCoupons, usedCoupons);
   }
+}
+
+// お店の人がクーポン使用画面で「使用する」を押したとき
+function useCoupon(coupon) {
+  if (getStatus(coupon) !== 'acquired') return false;
+  markCouponUsed(coupon);
+  addNotice('coupon', 'クーポンを使用しました', `${coupon.name}の${coupon.discount.toLocaleString()}円引きクーポンを使用しました。`);
+  render();
+  return true;
 }
 
 // この金額の支払いでクーポンが使えるか（使えるならそのクーポン、使えないなら null）
