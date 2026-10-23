@@ -18,9 +18,10 @@ function seedDemoHistory() {
     return; // 保存が使えない環境では入れない
   }
 
-  // いまあるお知らせ・ポイントの履歴を空にしてから入れる
+  // いまあるお知らせ・ポイントの履歴・予約を空にしてから入れる
   notices.length = 0;
   pointData.history = [];
+  reservations.length = 0;
 
   let balance = DEMO_START.balance;
   let points = DEMO_START.points;
@@ -51,10 +52,22 @@ function seedDemoHistory() {
     }
 
     if (h.type === 'reserve') {
-      const date = dateAfter(h.stayIn);
-      const when = h.nights ? `${formatDate(date)}から${h.nights}泊` : `${formatDate(date)} ${h.time2}`;
+      // 予約の一覧（アカウント画面）にも入れる
+      const shop = SHOPS.find((s) => s.name === h.shop);
+      const reservation = {
+        id: `R${String(Math.floor(at / 60000)).slice(-6)}`, // 予約した時刻（分）から作る
+        shopId: shop ? shop.id : null,
+        shopName: h.shop,
+        date: dateAfter(h.stayIn),
+        time: h.nights ? null : h.time2,
+        nights: h.nights || null,
+        people: h.people,
+        points: h.points || 0,
+        createdAt: at,
+      };
+      reservations.push(reservation);
       notices.unshift({ type: 'reserve', title: '予約が完了しました',
-        body: `${h.shop}　${when}・${h.people}名`, at, read });
+        body: `${h.shop}　${getReservationWhen(reservation)}・${h.people}名（予約番号 ${reservation.id}）`, at, read });
       if (h.points) {
         points += h.points;
         pointData.history.push({ label: `${h.shop}の予約`, amount: h.points, at });
@@ -70,6 +83,7 @@ function seedDemoHistory() {
   save(KEYS.notices, notices);
   save(KEYS.wallet, wallet);
   save(KEYS.points, pointData);
+  save(KEYS.reservations, reservations);
   save(KEYS.demoSeeded, 1);
 }
 
@@ -106,7 +120,8 @@ window.sotoPayDemo = {
     wallet.balance = INITIAL_BALANCE;
     tour = null;
     try {
-      Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+      // 会員番号（KEYS.user）は残す
+      Object.values(KEYS).filter((key) => key !== KEYS.user).forEach((key) => localStorage.removeItem(key));
     } catch (e) {}
     render();
   },

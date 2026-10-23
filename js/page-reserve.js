@@ -280,9 +280,7 @@
     info.append(
       el('dt', '', 'お店'), el('dd', '', shop.name),
       el('dt', '', isStay ? 'チェックイン' : '日時'),
-      el('dd', '', isStay
-        ? `${formatDate(reservation.date)}から${reservation.nights}泊`
-        : `${formatDate(reservation.date)} ${reservation.time}`),
+      el('dd', '', getReservationWhen(reservation)),
       el('dt', '', '人数'), el('dd', '', `${reservation.people}名`),
       el('dt', '', '予約番号'), el('dd', '', reservation.id)
     );
