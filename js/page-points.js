@@ -10,7 +10,8 @@
   const page = document.querySelector('.points-page');
 
   // アカウントから開いたときは、戻るボタンをアカウントへ、下のナビを「アカウント」にする
-  if (new URLSearchParams(location.search).get('from') === 'account') {
+  const fromAccount = new URLSearchParams(location.search).get('from') === 'account';
+  if (fromAccount) {
     const back = document.querySelector('.back-btn');
     back.href = 'account.html';
     back.setAttribute('aria-label', 'アカウントに戻る');
@@ -63,7 +64,15 @@
     earned.forEach((h) => earnList.append(createHistoryRow(h)));
     earnSection.append(earnList);
 
-    page.append(card, earnSection);
+    // もらい方・使い方は、よくある質問へ
+    const help = el('a', 'points-help');
+    // ホームから開いたときは、よくある質問でも下のナビを「ホーム」にする
+    help.href = fromAccount ? 'faq.html#points' : 'faq.html?from=home#points';
+    const helpText = el('span', 'points-help-text');
+    helpText.append(el('strong', '', 'ポイントのもらい方・使い方'), el('span', '', 'よくある質問で見る'));
+    help.append(helpText, el('span', 'pay-coupon-arrow', '›'));
+
+    page.append(card, help, earnSection);
 
     // ── 使った履歴 ──
     const used = [...pointData.history].filter((h) => h.amount < 0).reverse();

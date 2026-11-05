@@ -3747,3 +3747,102 @@ button.bill-row:active {
   font-weight: 900;
   opacity: 1;
 }
+
+/* ════════════════════════════
+   よくある質問（faq.html）
+   ════════════════════════════ */
+.faq-page {
+  padding-bottom: 24px;
+}
+
+.faq-search-input {
+  min-width: 0;
+}
+
+.faq-chips {
+  margin-top: 12px;
+}
+
+.faq-section {
+  gap: 8px;
+}
+
+.faq-item {
+  border-radius: 12px;
+  background: var(--gray-100);
+}
+
+.faq-q {
+  position: relative;
+  padding: 14px 40px 14px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-q::-webkit-details-marker {
+  display: none;
+}
+
+/* 右の ＋ / − */
+.faq-q::after {
+  content: '＋';
+  content: '＋' / ''; /* 読み上げでは読まない（対応していないブラウザは上の行を使う） */
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--green-primary);
+  font-weight: 900;
+}
+
+.faq-item[open] .faq-q::after {
+  content: '−';
+  content: '−' / '';
+}
+
+.faq-a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 14px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+
+.faq-empty {
+  margin: 16px;
+}
+
+.points-help {
+  margin: 16px 16px 0;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: 1.5px solid var(--green-primary);
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.points-help-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.points-help-text strong {
+  font-size: 14px;
+  color: var(--green-dark);
+}
+
+.points-help-text span {
+  font-size: 11px;
+  color: var(--gray-700);
+}
