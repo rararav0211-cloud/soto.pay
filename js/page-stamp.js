@@ -88,12 +88,12 @@
     countText.append(el('strong', '', usable.length), ' 枚 使えます');
     hero.append(
       el('p', 'stamp-hero-title', '今日の回遊クーポン'),
-      el('p', 'stamp-hero-text', 'お店で桑都ペイを使うと、次のお店のクーポンが解放されます。そのお店で使うと、また次が開きます。'),
+      el('p', 'stamp-hero-text', `お店で桑都ペイを使うと、次のお店のクーポンが解放されます。そのお店で使うと、また次が開きます。期限はその日の23:59まで。1回${TOUR_EXTEND.minAmount.toLocaleString()}円以上のお支払いで、翌日の23:59まで延びます。`),
       countText
     );
     if (unlocked.length > 0) {
       const remain = el('p', 'stamp-hero-period');
-      remain.append(`今日解放したクーポン ${unlocked.length}枚・本日23:59まで（残り `, el('span', 'tour-countdown', formatRemaining(getTourExpiry() - Date.now())), '）');
+      remain.append(`今日解放したクーポン ${unlocked.length}枚・${getTourExpiryText()}（残り `, el('span', 'tour-countdown', formatRemaining(getTourExpiry() - Date.now())), '）');
       hero.append(remain);
     } else {
       hero.append(el('p', 'stamp-hero-period', 'まずは高尾山（ケーブルカー・リフト）で使ってみましょう。'));

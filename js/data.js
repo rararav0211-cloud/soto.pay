@@ -208,7 +208,7 @@ const SHOPS = [
 //  ・高尾山エリアのお店で支払うと、八王子駅周辺の回遊クーポン（TOUR_FROM_TAKAO）が解放される
 //  ・さらに、ルートの並び（spots）から回遊クーポンの「つながり」を作る（state.js の TOUR_NEXT）
 //    前のお店で支払うと、次のお店の回遊クーポンが解放される
-//  ・解放したクーポンは、その日の23:59まで
+//  ・解放したクーポンは、その日の23:59まで。TOUR_EXTEND.minAmount 円以上の支払いで、翌日の23:59まで延びる
 //  ・お店で桑都ペイを使うとスタンプが押され、ルートのスタンプが半分・全部たまると特典（TOUR_REWARDS）
 //
 //  TOUR_RALLY : 全体のタイトル・期間（特典を受け取れる期間）
@@ -229,6 +229,10 @@ const TOUR_RALLY = {
 
 // 高尾山エリアのお店で支払うと解放される、八王子駅周辺の回遊クーポン（COUPONS の id）
 const TOUR_FROM_TAKAO = ['celeo-hachioji', 'tokyu-square', 'mainichi-sauna', 'yume-museum', 'takenoya', 'den'];
+
+// 回遊クーポンの期限の延長：回遊クーポンを持っている日に、1回でこの金額（お会計）以上を支払うと、
+// 期限がその次の日の23:59まで延びる（スライド30「◯円以上の購入で有効期限延長」）
+const TOUR_EXTEND = { minAmount: 3000 };
 
 // 特典：スタンプが半分たまったら（half）と、全部たまったら（complete）残高に入る金額
 const TOUR_REWARDS = { half: 200, complete: 500 };

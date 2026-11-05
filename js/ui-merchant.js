@@ -121,7 +121,7 @@ function createCourseBox(m) {
 
   const next = getUnlocksFor(m);
   if (next.length > 0) {
-    box.append(el('p', 'tour-box-sub', 'ここで支払うと解放されるクーポン（本日23:59まで）'), createCouponChips(next));
+    box.append(el('p', 'tour-box-sub', `ここで支払うと解放されるクーポン（${getTourExpiryText()}）`), createCouponChips(next));
   }
 
   const courses = getCoursesFor(m);
@@ -162,9 +162,9 @@ function createMerchantCouponBox(coupon) {
   box.append(head, amount);
 
   if (status === 'locked') {
-    box.append(el('p', 'tour-box-text', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます（本日23:59まで）。`));
+    box.append(el('p', 'tour-box-text', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます（${getTourExpiryText()}）。`));
   } else if (status === 'acquired') {
-    box.append(el('p', 'tour-box-text', `このお店で桑都ペイを使うと、自動で割引されます${coupon.kind === 'tour' ? '（本日23:59まで）' : ''}。`));
+    box.append(el('p', 'tour-box-text', `このお店で桑都ペイを使うと、自動で割引されます${coupon.kind === 'tour' ? `（${getTourExpiryText()}）` : ''}。`));
   }
 
   const actions = el('div', 'tour-box-actions');

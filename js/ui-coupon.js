@@ -20,12 +20,12 @@ function getConditionText(coupon) {
     : '利用条件なし';
 }
 
-// 有効期限の文章（回遊クーポンは解放した日の23:59まで）
+// 有効期限の文章（回遊クーポンは解放した日の23:59まで。決まった金額以上の支払いで次の日まで延びる）
 function getExpiryText(coupon, status) {
   if (status === 'used') return '使用済み';
   if (coupon.kind !== 'tour') return 'なし';
   if (isStartCoupon(coupon)) return 'いつでも（回遊のはじまりのクーポン）';
-  return status === 'locked' ? '解放した日の23:59まで' : '本日23:59まで';
+  return status === 'locked' ? '解放した日の23:59まで' : getTourExpiryText();
 }
 
 // 回遊クーポンの解放のしかた（「〇〇で支払うと解放」）
@@ -82,7 +82,7 @@ function createCouponCard(coupon, isRow) {
     } else if (isStartCoupon(coupon)) {
       note = el('p', 'coupon-note is-active', 'ここから回遊スタート');
     } else {
-      note = el('p', 'coupon-note is-active', '本日23:59まで');
+      note = el('p', 'coupon-note is-active', getTourExpiryText());
     }
   }
 
@@ -150,7 +150,10 @@ function fillDetail(coupon) {
   howto.append(el('p', 'sheet-howto-title', '使い方'));
   const steps = el('ol', '');
   if (coupon.kind !== 'tour') steps.append(el('li', '', '「獲得する」を押してクーポンを受け取ります'));
-  else if (!isStartCoupon(coupon)) steps.append(el('li', '', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます（その日の23:59まで）`));
+  else if (!isStartCoupon(coupon)) {
+    steps.append(el('li', '', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます（その日の23:59まで）`),
+      el('li', '', `1回${TOUR_EXTEND.minAmount.toLocaleString()}円以上のお支払いで、期限が翌日の23:59まで延びます`));
+  }
   steps.append(
     el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます'),
     el('li', '', 'または「このクーポンを使う」を押して、スタッフに画面を見せます')
@@ -341,7 +344,7 @@ function renderBanners() {
       const fromTakao = unlocked.some(isFromTakao);
       banner.append(
         el('p', 'tour-title', fromTakao ? '八王子駅周辺の回遊クーポン配信中' : '回遊クーポン配信中'),
-        el('p', 'tour-text', fromTakao ? '高尾山でのご利用ありがとうございます。本日23:59まで使えます。' : 'お店でのご利用ありがとうございます。本日23:59まで使えます。')
+        el('p', 'tour-text', fromTakao ? `高尾山でのご利用ありがとうございます。${getTourExpiryText()}使えます。` : `お店でのご利用ありがとうございます。${getTourExpiryText()}使えます。`)
       );
       const remain = el('p', 'tour-remaining');
       remain.append('残り ', el('strong', 'tour-countdown', formatRemaining(getTourExpiry() - Date.now())));

@@ -166,6 +166,7 @@ const usedCoupons = load(KEYS.usedCoupons, []); // 通常クーポンの使用�
 //    例：ルートが ケーブルカー → 薬王院 → 髙橋家 なら、ケーブルカーで払うと薬王院、薬王院で払うと髙橋家が開く
 //  ・ルートの最初のお店（高尾山）が回遊のはじまり
 //  ・解放したクーポンは、その日の23:59まで（次の日は、また高尾山から）
+//    1回 TOUR_EXTEND.minAmount 円以上の支払いで、次の日の23:59まで延びる
 // ════════════════════════════
 
 // ルートの1か所（{ coupon } か { shop }）のクーポン
@@ -219,21 +220,55 @@ function getUnlockFromText(coupon) {
   return names.join('・');
 }
 
-// 今日の回遊クーポン { day: '2026-11-05', unlocked: { id: 時刻 }, used: { id: 時刻 } }
-// 日付が変わったら空にする
+// 今日の回遊クーポン
+// { day: 解放を始めた日, expiresAt: 期限（ふつうはその日の23:59。延長すると次の日の23:59）, unlocked: { id: 時刻 }, used: { id: 時刻 } }
+// 期限が過ぎたら空にする（次の日は、また高尾山から）
 let tourDay = load(KEYS.tour, null);
+
+// days 日後の23:59:59
+function getEndOfDay(days = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
 function getTourDay() {
-  if (!tourDay || tourDay.day !== todayString()) {
-    tourDay = { day: todayString(), unlocked: {}, used: {} };
+  // 前のしくみの保存（expiresAt がない）は、その日の終わりを期限にする
+  if (tourDay && !tourDay.expiresAt && tourDay.day === todayString()) tourDay.expiresAt = getEndOfDay(0);
+  if (!tourDay || !tourDay.expiresAt || Date.now() >= tourDay.expiresAt) {
+    tourDay = { day: todayString(), expiresAt: getEndOfDay(0), unlocked: {}, used: {} };
   }
   return tourDay;
 }
 
-// 今日の回遊クーポンの期限（今日の23:59）
+// 回遊クーポンの期限
 function getTourExpiry() {
-  const d = new Date();
-  d.setHours(23, 59, 59, 999);
-  return d.getTime();
+  return getTourDay().expiresAt;
+}
+
+// 「本日23:59まで」「11月6日(金) 23:59まで」
+function getTourExpiryText() {
+  const expiry = getTourExpiry();
+  if (expiry <= getEndOfDay(0)) return '本日23:59まで';
+  return `${formatDate(toDateString(new Date(expiry)))} 23:59まで`;
+}
+
+// 期限を延ばせるか（回遊クーポンを持っていて、まだ明日まで延ばしていない）
+function canExtendTour() {
+  return getUnlockedToday().length > 0 && getTourExpiry() < getEndOfDay(1);
+}
+
+// この金額の支払いで期限が延びるか
+function willExtendTour(amount) {
+  return canExtendTour() && amount >= TOUR_EXTEND.minAmount;
+}
+
+// 期限を次の日の23:59まで延ばす
+function extendTour() {
+  const day = getTourDay();
+  day.expiresAt = getEndOfDay(1);
+  save(KEYS.tour, day);
 }
 
 // 今日解放した回遊クーポン（はじまりのクーポンはふくまない）
@@ -509,8 +544,10 @@ function pay(m, amount, points = 0) {
     save(KEYS.stamps, stampData);
   }
 
-  // 4 次のお店の回遊クーポンを解放
+  // 4 次のお店の回遊クーポンを解放し、決まった金額以上の支払いなら期限を延ばす
   const unlocked = unlockNext(m);
+  const extended = willExtendTour(amount);
+  if (extended) extendTour();
 
   // 5 記録とお知らせ
   const payment = {
@@ -529,7 +566,8 @@ function pay(m, amount, points = 0) {
 
   const extras = [];
   if (stamped) extras.push('回遊のスタンプが押されました。');
-  if (unlocked.length) extras.push(`次のお店の回遊クーポンが${unlocked.length}枚解放されました（本日23:59まで）。`);
+  if (unlocked.length) extras.push(`次のお店の回遊クーポンが${unlocked.length}枚解放されました（${getTourExpiryText()}）。`);
+  if (extended) extras.push(`${TOUR_EXTEND.minAmount.toLocaleString()}円以上のお支払いで、回遊クーポンの期限が${getTourExpiryText()}延びました。`);
   const used = [];
   if (payment.discount) used.push(`クーポン${payment.discount.toLocaleString()}円引き`);
   if (payment.pointsUsed) used.push(`${payment.pointsUsed.toLocaleString()}pt使用`);
@@ -542,7 +580,7 @@ function pay(m, amount, points = 0) {
     `${paidText}。残高：${wallet.balance.toLocaleString()}円${extras.length ? `\n${extras.join('')}` : ''}`);
 
   render();
-  return { ok: true, payment, coupon: preview.coupon, stamped, unlocked };
+  return { ok: true, payment, coupon: preview.coupon, stamped, unlocked, extended };
 }
 
 // ════════════════════════════
