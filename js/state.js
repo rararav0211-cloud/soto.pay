@@ -119,7 +119,12 @@ function addPoints(amount, label) {
   pointData.history.push({ label, amount, at: Date.now() });
   save(KEYS.points, pointData);
   updatePointDisplays();
-  addNotice('points', `${amount.toLocaleString()}ptを獲得しました`, `${label}でポイントが付与されました。保有ポイント：${pointData.balance.toLocaleString()}pt`);
+  addNotice('points', `${POINT_NAME}を${amount.toLocaleString()}pt獲得しました`, `${label}でポイントが付与されました。宿泊・体験のお店での支払いに使えます。保有：${pointData.balance.toLocaleString()}pt`);
+}
+
+// 宿泊・体験ポイントが使えるお店か（宿泊・体験の予約ができるお店）
+function canUsePointsAt(m) {
+  return Boolean(m && m.shop && POINT_USABLE_TYPES.includes(m.shop.type));
 }
 
 // ポイントを使う（支払い・予約のキャンセルで差し引く）。お知らせは呼び出した側で出す
@@ -515,7 +520,8 @@ function getPaymentPreview(m, amount, points = 0) {
   const coupon = getUsableCoupon(m.coupon, amount);
   const discount = coupon ? Math.min(coupon.discount, amount) : 0;
   const afterCoupon = amount - discount;
-  const maxPoints = Math.min(pointData.balance, afterCoupon); // この支払いで使える最大のポイント
+  // この支払いで使える最大のポイント（宿泊・体験のお店でなければ 0）
+  const maxPoints = canUsePointsAt(m) ? Math.min(pointData.balance, afterCoupon) : 0;
   const pointsUsed = Math.max(0, Math.min(Math.floor(points) || 0, maxPoints));
   const paid = afterCoupon - pointsUsed;
   return { coupon, discount, maxPoints, pointsUsed, paid, enough: paid <= wallet.balance, after: wallet.balance - paid };

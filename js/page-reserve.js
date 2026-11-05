@@ -186,8 +186,8 @@
       pointBox.hidden = points === 0;
       if (points === 0) return;
       const amount = el('p', 'point-box-amount');
-      amount.append('この予約で ', el('strong', '', `${points.toLocaleString()}pt`), ' もらえます');
-      pointBox.append(amount, el('p', 'point-box-text', `${getPointRuleText(shop)}。予約が完了するとポイントが付与されます。`));
+      amount.append(`この予約で${POINT_NAME} `, el('strong', '', `${points.toLocaleString()}pt`), ' もらえます');
+      pointBox.append(amount, el('p', 'point-box-text', `${getPointRuleText(shop)}。予約が完了すると付与され、宿泊・体験のお店での支払いに使えます。`));
     }
     form.addEventListener('change', updatePointBox);
 
@@ -277,7 +277,7 @@
       const amount = el('p', 'point-box-amount');
       amount.append(el('strong', '', `+${reservation.points.toLocaleString()}pt`), ' 獲得しました');
       const total = el('p', 'point-box-text');
-      total.append('保有ポイント：', el('span', 'points-value', pointData.balance.toLocaleString()), 'pt');
+      total.append(`${POINT_NAME}：`, el('span', 'points-value', pointData.balance.toLocaleString()), 'pt（宿泊・体験のお店で使えます）');
       pointDone.append(amount, total);
       sheet.append(pointDone);
     }

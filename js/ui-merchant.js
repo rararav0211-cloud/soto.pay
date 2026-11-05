@@ -201,6 +201,15 @@ function fillMerchant(m) {
 
   sheet.append(...sheetTop(), labels, title, desc, info);
 
+  // 宿泊・体験ポイントが使えるお店
+  if (canUsePointsAt(m)) {
+    const box = el('div', 'point-box');
+    const amount = el('p', 'point-box-amount');
+    amount.append(`${POINT_NAME}が使えます　保有 `, el('strong', '', `${pointData.balance.toLocaleString()}pt`));
+    box.append(amount, el('p', 'point-box-text', 'このお店で桑都ペイを使うとき、1pt＝1円で支払いに使えます。'));
+    sheet.append(box);
+  }
+
   // クーポンがあるお店
   if (m.coupon) sheet.append(createMerchantCouponBox(m.coupon));
 

@@ -150,7 +150,7 @@ function openPay(options = {}) {
     const pointToggle = el('label', 'near-toggle pay-point-toggle');
     const pointText = el('div', 'pay-point-text');
     const pointSub = el('span', 'pay-point-sub');
-    pointText.append(el('span', 'near-toggle-text', 'ポイントを使う'), pointSub);
+    pointText.append(el('span', 'near-toggle-text', `${POINT_NAME}を使う`), pointSub);
     const pointCheck = el('input');
     pointCheck.type = 'checkbox';
     pointCheck.setAttribute('role', 'switch');
@@ -205,12 +205,18 @@ function openPay(options = {}) {
 
     // ポイントの箱の表示を、いまの計算結果に合わせる
     function updatePointBox(preview, amount) {
-      const has = pointData.balance > 0;
+      // 宿泊・体験のお店でだけ使える
+      const usableHere = canUsePointsAt(m);
+      const has = pointData.balance > 0 && usableHere;
       pointCheck.disabled = !has;
       pointCheck.checked = usePoints && has;
-      pointSub.textContent = has
-        ? `保有 ${pointData.balance.toLocaleString()}pt（1pt＝1円）`
-        : '使えるポイントがありません';
+      if (!usableHere) {
+        pointSub.textContent = `宿泊・体験のお店でだけ使えます（保有 ${pointData.balance.toLocaleString()}pt）`;
+      } else {
+        pointSub.textContent = has
+          ? `保有 ${pointData.balance.toLocaleString()}pt（1pt＝1円）`
+          : '使えるポイントがありません';
+      }
 
       const show = usePoints && has;
       pointInputRow.hidden = !show;
