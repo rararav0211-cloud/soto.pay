@@ -1,6 +1,6 @@
 // ════════════════════════════════════════
 //  state.js … アプリの「状態」（保存しておくデータ）と、それを変える操作
-//  ・お知らせ ・残高 ・ポイント ・クーポン（通常・回遊） ・予約 ・スタンプ ・支払い
+//  ・お知らせ ・残高 ・ポイント ・クーポン（通常・回遊） ・予約 ・回遊クーポンとスタンプ ・支払い
 //  画面の作り方はここには書かず、データの読み書きだけをまとめる
 // ════════════════════════════════════════
 'use strict';
@@ -9,7 +9,8 @@
 const KEYS = {
   coupons:      'sotoPayCoupons',       // 通常クーポンの獲得済み id
   usedCoupons:  'sotoPayUsedCoupons',   // 通常クーポンの使用済み id
-  tour:         'sotoPayTour',          // 回遊クーポンの解放状況
+  tour:         'sotoPayTour',          // 今日の回遊クーポン（解放・使用）
+  courses:      'sotoPayCourses',       // おすすめルートの特典の受け取り
   notices:      'sotoPayNotices',       // お知らせ
   wallet:       'sotoPayWallet',        // 残高
   points:       'sotoPayPoints',        // ポイント
@@ -154,81 +155,156 @@ function getPointRuleText(shop) {
 const acquired = load(KEYS.coupons, []);        // 通常クーポンの獲得済み id
 const usedCoupons = load(KEYS.usedCoupons, []); // 通常クーポンの使用済み id
 
-// 回遊クーポンの状態
-// {
-//   origin     : 起点の場所
-//   unlockedAt : 起点で支払った時刻
-//   expiresAt  : 有効期限
-//   acquired   : [{ id, at, usedAt }] 獲得したクーポンと時刻（＝送客の記録）。使ったら usedAt が入る
-// }
-let tour = load(KEYS.tour, null);
+// ════════════════════════════
+//  回遊クーポン（つながりで解放）
+//  ・高尾山エリアのお店で支払うと、八王子駅周辺の回遊クーポン（TOUR_FROM_TAKAO）が解放される
+//  ・お店で支払うと、そのお店の「次のお店」の回遊クーポンが解放される
+//    「次のお店」は、おすすめルート（TOUR_COURSES）の spots の並びから作る
+//    例：ルートが ケーブルカー → 薬王院 → 髙橋家 なら、ケーブルカーで払うと薬王院、薬王院で払うと髙橋家が開く
+//  ・ルートの最初のお店（高尾山）が回遊のはじまり
+//  ・解放したクーポンは、その日の23:59まで（次の日は、また高尾山から）
+// ════════════════════════════
 
-// 回遊クーポンの有効期限：解放した日の 23:59 まで
-function getTourExpiry(unlockedAt) {
-  const d = new Date(unlockedAt);
+// ルートの1か所（{ coupon } か { shop }）のクーポン
+function getSpotCoupon(spot) {
+  if (spot.coupon) return COUPONS.find((c) => c.id === spot.coupon) || null;
+  const shop = SHOPS.find((s) => s.id === spot.shop);
+  return shop ? getShopCoupon(shop) : null;
+}
+
+// つながり { クーポンの id: [次のクーポンの id, …] } と、はじまりのクーポンの id
+const TOUR_NEXT = {};
+const TOUR_STARTS = [];
+TOUR_COURSES.forEach((course) => {
+  const ids = course.spots.map(getSpotCoupon).filter(Boolean).map((c) => c.id);
+  if (ids[0] && !TOUR_STARTS.includes(ids[0])) TOUR_STARTS.push(ids[0]);
+  ids.forEach((id, i) => {
+    const next = ids[i + 1];
+    if (!next) return;
+    TOUR_NEXT[id] = TOUR_NEXT[id] || [];
+    if (!TOUR_NEXT[id].includes(next)) TOUR_NEXT[id].push(next);
+  });
+});
+
+function findCoupon(id) {
+  return COUPONS.find((c) => c.id === id);
+}
+
+// このクーポンのお店で払うと解放されるクーポン
+function getNextCoupons(coupon) {
+  return coupon ? (TOUR_NEXT[coupon.id] || []).map(findCoupon) : [];
+}
+
+// このクーポンを解放するお店（のクーポン）
+function getPrevCoupons(coupon) {
+  return Object.keys(TOUR_NEXT).filter((id) => TOUR_NEXT[id].includes(coupon.id)).map(findCoupon);
+}
+
+function isStartCoupon(coupon) {
+  return TOUR_STARTS.includes(coupon.id);
+}
+
+// 高尾山エリアで支払うと解放されるクーポンか
+function isFromTakao(coupon) {
+  return TOUR_FROM_TAKAO.includes(coupon.id);
+}
+
+// 「〇〇・△△で支払うと解放」の〇〇・△△
+function getUnlockFromText(coupon) {
+  const names = getPrevCoupons(coupon).map((c) => c.name);
+  if (isFromTakao(coupon)) names.unshift('高尾山エリアのお店');
+  return names.join('・');
+}
+
+// 今日の回遊クーポン { day: '2026-11-05', unlocked: { id: 時刻 }, used: { id: 時刻 } }
+// 日付が変わったら空にする
+let tourDay = load(KEYS.tour, null);
+function getTourDay() {
+  if (!tourDay || tourDay.day !== todayString()) {
+    tourDay = { day: todayString(), unlocked: {}, used: {} };
+  }
+  return tourDay;
+}
+
+// 今日の回遊クーポンの期限（今日の23:59）
+function getTourExpiry() {
+  const d = new Date();
   d.setHours(23, 59, 59, 999);
   return d.getTime();
 }
 
-function isTourActive() {
-  return tour !== null && Date.now() < tour.expiresAt;
+// 今日解放した回遊クーポン（はじまりのクーポンはふくまない）
+function getUnlockedToday() {
+  return Object.keys(getTourDay().unlocked).map(findCoupon).filter(Boolean);
 }
 
-function isTourExpired() {
-  return tour !== null && Date.now() >= tour.expiresAt;
+// このお店（加盟店）で支払うと解放される回遊クーポン
+function getUnlocksFor(m) {
+  const next = getNextCoupons(m.coupon);
+  if (m.area === 'takao') TOUR_FROM_TAKAO.map(findCoupon).forEach((c) => { if (!next.includes(c)) next.push(c); });
+  return next.filter((c) => c && c.kind === 'tour' && !isStartCoupon(c));
 }
 
-// 起点（高尾山）で支払ったときに呼ぶ
-function unlockTour() {
-  const now = Date.now();
-  tour = {
-    origin: TOUR_ORIGIN,
-    unlockedAt: now,
-    expiresAt: getTourExpiry(now),
-    acquired: [],
-  };
-  save(KEYS.tour, tour);
+// お店（加盟店）で支払ったときに呼ぶ。次のお店の回遊クーポンを解放して、新しく開いたものを返す
+function unlockNext(m) {
+  const day = getTourDay();
+  const opened = getUnlocksFor(m).filter((c) => !day.unlocked[c.id]);
+  opened.forEach((c) => { day.unlocked[c.id] = Date.now(); });
+  if (opened.length > 0) save(KEYS.tour, day);
+  return opened;
 }
 
 // クーポン1枚の状態
-//  available … 獲得できる
-//  acquired  … 獲得済み（支払いで使える）
-//  used      … 支払いで使った
-//  locked    … 回遊クーポンで、まだ高尾山で支払っていない
-//  expired   … 回遊クーポンで、有効期限が切れた
+//  available … 獲得できる（通常クーポン）
+//  acquired  … 獲得済み・解放済み（支払いで使える）
+//  used      … 使った（回遊クーポンは今日使った）
+//  locked    … 回遊クーポンで、まだ解放されていない
 function getStatus(coupon) {
-  if (coupon.kind !== 'tour') {
-    if (usedCoupons.includes(coupon.id)) return 'used';
-    return acquired.includes(coupon.id) ? 'acquired' : 'available';
+  if (coupon.kind === 'tour') {
+    const day = getTourDay();
+    if (day.used[coupon.id]) return 'used';
+    return isStartCoupon(coupon) || day.unlocked[coupon.id] ? 'acquired' : 'locked';
   }
-  if (tour === null) return 'locked';
-  if (isTourExpired()) return 'expired';
-  const item = tour.acquired.find((a) => a.id === coupon.id);
-  if (!item) return 'available';
-  return item.usedAt ? 'used' : 'acquired';
+  if (usedCoupons.includes(coupon.id)) return 'used';
+  return acquired.includes(coupon.id) ? 'acquired' : 'available';
 }
 
+// 通常クーポンを獲得する（回遊クーポンは支払いで解放される）
 function acquireCoupon(coupon) {
-  if (coupon.kind === 'tour') {
-    tour.acquired.push({ id: coupon.id, at: Date.now() });
-    save(KEYS.tour, tour);
-  } else {
-    acquired.push(coupon.id);
-    save(KEYS.coupons, acquired);
-  }
+  if (coupon.kind === 'tour' || acquired.includes(coupon.id)) return;
+  acquired.push(coupon.id);
+  save(KEYS.coupons, acquired);
   render();
 }
 
 // クーポンを使用済みにする
 function markCouponUsed(coupon) {
   if (coupon.kind === 'tour') {
-    const item = tour.acquired.find((a) => a.id === coupon.id);
-    if (item) item.usedAt = Date.now();
-    save(KEYS.tour, tour);
-  } else {
-    usedCoupons.push(coupon.id);
-    save(KEYS.usedCoupons, usedCoupons);
+    const day = getTourDay();
+    day.used[coupon.id] = Date.now();
+    save(KEYS.tour, day);
+    return;
   }
+  if (usedCoupons.includes(coupon.id)) return;
+  usedCoupons.push(coupon.id);
+  save(KEYS.usedCoupons, usedCoupons);
+}
+
+// ════════════════════════════
+//  おすすめルート（TOUR_COURSES）の特典
+//  { claimed: { ルートの id: ['half' / 'complete'] } }
+// ════════════════════════════
+const courseData = load(KEYS.courses, { claimed: {} });
+if (!courseData.claimed) courseData.claimed = {};
+
+// ルートのお店で使える回遊クーポン
+function getCourseCoupons(course) {
+  return course.spots.map(getSpotCoupon).filter((coupon) => coupon && coupon.kind === 'tour');
+}
+
+// この回遊クーポンが入っているルート
+function getCoursesForCoupon(coupon) {
+  return TOUR_COURSES.filter((course) => getCourseCoupons(course).includes(coupon));
 }
 
 // お店の人がクーポン使用画面で「使用する」を押したとき
@@ -326,32 +402,54 @@ function cancelReservation(id) {
 //  スタンプラリー
 //  スタンプは加盟店の key（ui-merchant.js の buildMerchants で作る）ごとに記録する
 // ════════════════════════════
-// { stamps: { 加盟店の key: 押した時刻 }, claimed: [受け取った特典の count] }
-const stampData = load(KEYS.stamps, { stamps: {}, claimed: [] });
+// { stamps: { 加盟店の key: 押した時刻 } }
+// スタンプはお店ごとに1つ。同じお店が入っているコースなら、どのコースでも押したことになる
+const stampData = load(KEYS.stamps, { stamps: {} });
 
-// STAMP_RALLY.spots の1件が、この加盟店のことかどうか
+// TOUR_COURSES の spots の1件が、この加盟店のことかどうか
 function isSameSpot(spot, m) {
   return Boolean((spot.shop && m.shop && m.shop.id === spot.shop) ||
     (spot.coupon && m.coupon && m.coupon.id === spot.coupon));
 }
 
+// この加盟店が入っているおすすめルート
+function getCoursesFor(m) {
+  return TOUR_COURSES.filter((course) => course.spots.some((spot) => isSameSpot(spot, m)));
+}
+
+// どれかのおすすめルートのお店か（スタンプが押せるか）
 function isStampSpot(m) {
-  return STAMP_RALLY.spots.some((spot) => isSameSpot(spot, m));
+  return getCoursesFor(m).length > 0;
 }
 
 function hasStamp(m) {
   return Boolean(stampData.stamps[m.key]);
 }
 
-// 特典を受け取る（残高に足す）
-function claimReward(reward) {
-  if (stampData.claimed.includes(reward.count)) return;
-  stampData.claimed.push(reward.count);
-  save(KEYS.stamps, stampData);
+// コースの特典（半分たまったら・全部たまったら）
+//  → [{ id: 'half' / 'complete', count: 必要なスタンプの数, amount: 円, label }]
+function getCourseRewards(course) {
+  const total = course.spots.length;
+  const half = Math.ceil(total / 2);
+  return [
+    { id: 'half', count: half, amount: TOUR_REWARDS.half, label: `桑都ペイ ${TOUR_REWARDS.half.toLocaleString()}円分` },
+    { id: 'complete', count: total, amount: TOUR_REWARDS.complete, label: `コース制覇！桑都ペイ ${TOUR_REWARDS.complete.toLocaleString()}円分` },
+  ];
+}
+
+function isRewardClaimed(course, reward) {
+  return (courseData.claimed[course.id] || []).includes(reward.id);
+}
+
+// おすすめルートの特典を受け取る（残高に足す）
+function claimReward(course, reward) {
+  if (isRewardClaimed(course, reward)) return;
+  courseData.claimed[course.id] = [...(courseData.claimed[course.id] || []), reward.id];
+  save(KEYS.courses, courseData);
   wallet.balance += reward.amount;
   save(KEYS.wallet, wallet);
-  addNotice('reward', 'スタンプラリーの特典を受け取りました',
-    `${reward.label}を受け取りました。残高：${wallet.balance.toLocaleString()}円`);
+  addNotice('reward', 'おすすめルートの特典を受け取りました',
+    `「${course.title}」の${reward.label}を受け取りました。残高：${wallet.balance.toLocaleString()}円`);
   render();
 }
 
@@ -360,8 +458,8 @@ function claimReward(reward) {
 //  お店で桑都ペイを使ったときの処理は、すべてこの pay() を通る
 //  1. 使えるクーポンがあれば自動で割引
 //  2. 残高を減らす
-//  3. スタンプラリーの対象店ならスタンプを押す
-//  4. 高尾山エリアのお店なら回遊クーポンを解放
+//  3. 回遊のお店ならスタンプを押す
+//  4. 次のお店の回遊クーポンを解放
 //  5. 支払いの記録とお知らせを残す
 // ════════════════════════════
 // [{ id, key, name, amount, discount, couponId, paid, at }]
@@ -408,9 +506,8 @@ function pay(m, amount, points = 0) {
     save(KEYS.stamps, stampData);
   }
 
-  // 4 回遊クーポン（高尾山エリアで、まだ配信中でなければ）
-  const unlocked = m.area === 'takao' && !isTourActive();
-  if (unlocked) unlockTour();
+  // 4 次のお店の回遊クーポンを解放
+  const unlocked = unlockNext(m);
 
   // 5 記録とお知らせ
   const payment = {
@@ -428,8 +525,8 @@ function pay(m, amount, points = 0) {
   save(KEYS.payments, payments);
 
   const extras = [];
-  if (stamped) extras.push('スタンプが押されました。');
-  if (unlocked) extras.push(`${TOUR_DESTINATION}の回遊クーポンが届きました。`);
+  if (stamped) extras.push('回遊のスタンプが押されました。');
+  if (unlocked.length) extras.push(`次のお店の回遊クーポンが${unlocked.length}枚解放されました（本日23:59まで）。`);
   const used = [];
   if (payment.discount) used.push(`クーポン${payment.discount.toLocaleString()}円引き`);
   if (payment.pointsUsed) used.push(`${payment.pointsUsed.toLocaleString()}pt使用`);

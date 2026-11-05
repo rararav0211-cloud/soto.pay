@@ -44,51 +44,36 @@
   }
 
   // ════════════════════════════
-  //  予約画面に出す「回遊クーポン」の案内
-  //  dateValue … 予約しようとしている日（回遊クーポンは当日限りなので比べる）
-  //  onChange  … クーポンを獲得したときに呼ぶ（案内を描き直す）
+  //  予約画面に出す「このお店で使えるクーポン」の案内
+  //  onChange … クーポンを獲得したときに呼ぶ（案内を描き直す）
   // ════════════════════════════
   function createTourBox(shop, dateValue, onChange) {
-    // 高尾山エリアのお店：回遊の起点になることを伝える
-    if (shop.area === 'takao') return createOriginBox();
-
     const coupon = getShopCoupon(shop);
     if (!coupon) return null;
 
     const status = getStatus(coupon);
-    const box = el('div', 'tour-box');
+    const isTour = coupon.kind === 'tour';
+    const box = el('div', isTour ? 'tour-box' : 'tour-box is-normal');
 
     const head = el('div', 'tour-box-head');
-    head.append(el('span', 'coupon-badge', '回遊'), el('p', 'tour-box-title', 'このお店で回遊クーポンが使えます'));
+    if (isTour) head.append(el('span', 'coupon-badge', '回遊'));
+    head.append(el('p', 'tour-box-title', 'このお店でクーポンが使えます'));
 
     const amount = el('p', 'tour-box-amount');
     amount.append(el('strong', '', `${coupon.discount.toLocaleString()}円引き`), `（${getConditionText(coupon)}）`);
-
     box.append(head, amount);
 
-    // まだ解放されていない・期限切れ
-    if (status === 'locked' || status === 'expired') {
-      box.append(el('p', 'tour-box-text', status === 'locked'
-        ? `${TOUR_ORIGIN}で桑都ペイを使うと解放されます。高尾山に寄ってから来店するとおトクです。`
-        : `前回の回遊クーポンは期限切れです。当日に${TOUR_ORIGIN}で桑都ペイを使うと、また届きます。`));
-      return box;
-    }
-
-    // 配信中
-    const expiry = formatTime(tour.expiresAt);
     if (status === 'used') {
-      box.append(el('p', 'tour-box-text', '今日の回遊クーポンは、もう使いました。'));
-      return box;
-    }
-    if (status === 'acquired') {
-      box.append(el('p', 'tour-box-text', `お会計を桑都ペイで支払うと自動で割引されます（本日${expiry}まで）。`));
-      // 獲得済みは、押せないボタンで「獲得済み」と表示する
+      box.append(el('p', 'tour-box-text', 'このクーポンは使用済みです。'));
+    } else if (status === 'locked') {
+      box.append(el('p', 'tour-box-text', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます。解放した日の23:59まで使えます。`));
+    } else if (status === 'acquired') {
+      box.append(el('p', 'tour-box-text', `お会計を桑都ペイで支払うと自動で割引されます${isTour && !isStartCoupon(coupon) ? '（本日23:59まで）' : ''}。`));
       const done = el('button', 'tour-box-btn is-done', '✓ 獲得済み');
       done.type = 'button';
       done.disabled = true;
       box.append(done);
     } else {
-      box.append(el('p', 'tour-box-text', `配信中です。本日${expiry}まで使えます。`));
       const btn = el('button', 'tour-box-btn', 'クーポンを獲得する');
       btn.type = 'button'; // フォームの「予約を確定する」として扱われないようにする
       btn.addEventListener('click', () => {
@@ -97,15 +82,14 @@
       });
       box.append(btn);
     }
-
-    // 回遊クーポンは当日限り。別の日の予約なら注意を出す
-    if (dateValue !== todayString()) {
-      box.append(el('p', 'tour-box-warn', `※ 回遊クーポンは本日限りです。${formatDate(dateValue)}の来店には使えません。`));
+    // 解放した回遊クーポンは当日限り。別の日の予約なら注意を出す
+    if (isTour && !isStartCoupon(coupon) && status === 'acquired' && dateValue !== todayString()) {
+      box.append(el('p', 'tour-box-warn', `※ 解放した回遊クーポンは本日限りです。${formatDate(dateValue)}の来店には使えません。`));
     }
     return box;
   }
 
-  // 回遊クーポンの案内を入れる場所を作る（獲得したら自分で描き直す）
+  // クーポンの案内を入れる場所を作る（獲得したら自分で描き直す）
   //  getDate … 今の予約日を返す関数
   function createTourArea(shop, getDate) {
     const area = el('div', 'tour-area');

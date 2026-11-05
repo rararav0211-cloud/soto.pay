@@ -3002,3 +3002,431 @@ a.action-btn {
   line-height: 1.6;
   color: var(--gray-700);
 }
+
+/* ════════════════════════════
+   回遊コース（stamp.html）
+   ════════════════════════════ */
+/* a タグで作ったボタン（クーポン詳細の「回遊コースを見て参加する」など） */
+a.sheet-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ヒーロー内のラベル（白地の上に置く） */
+.stamp-hero .coupon-category {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+}
+
+.stamp-hero .coupon-badge.is-stamp {
+  background: var(--white);
+  color: #AD1457;
+}
+
+.coupon-category.is-season {
+  background: #FFF3E0;
+  color: #8A3A00;
+}
+
+/* コースの一覧 */
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 14px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.course-card.is-joined {
+  border-color: #C2185B;
+  background: #FFF5F8;
+}
+
+.course-card .stamp-progress {
+  background: var(--gray-200);
+  height: 6px;
+  margin: 2px 0;
+}
+
+.course-card .stamp-progress-bar {
+  background: #C2185B;
+}
+
+.course-card .stamp-tick {
+  display: none;
+}
+
+.course-card-title {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.course-card-catch {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.course-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.course-card-count {
+  flex-shrink: 0;
+  color: #C2185B;
+}
+
+/* 行程 */
+.course-plan {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.course-plan-step {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 0 0 14px 18px;
+}
+
+/* 左の線と点 */
+.course-plan-step::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #C2185B;
+}
+
+.course-plan-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 16px;
+  bottom: 0;
+  width: 1.5px;
+  background: #F8BBD0;
+}
+
+.course-plan-time {
+  flex-shrink: 0;
+  width: 44px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #C2185B;
+}
+
+.course-plan-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* このコースの回遊クーポン（セクションの中なので外側の余白はなし） */
+.course-coupons {
+  margin: 0;
+}
+
+.course-idea {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+
+/* 加盟店の詳細・支払い完了に出すコースの一覧 */
+.course-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.course-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--white);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.course-mini-name {
+  font-weight: 700;
+}
+
+.course-mini-count {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #C2185B;
+}
+
+/* ホーム・クーポン一覧のバナー（参加中のコース） */
+.tour-course-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tour-course-count {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+/* コースの中のクーポンは幅がせまいので、ボタンを消して状態は下の文字で見せる */
+.course-coupons .coupon-btn {
+  display: none;
+}
+
+/* ════════════════════════════
+   回遊クーポンのつながり
+   ════════════════════════════ */
+.tour-box-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+/* クーポンを小さく並べる */
+.tour-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tour-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 10px;
+  background: #FFF7E6;
+  border: 1.5px solid #E08A00;
+  border-radius: 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour-chip-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tour-chip-amount {
+  font-size: 11px;
+  font-weight: 900;
+  color: #E08A00;
+}
+
+.tour-chip.is-used,
+.tour-chip.is-locked {
+  background: var(--gray-100);
+  border-color: var(--gray-200);
+}
+
+.tour-chip.is-used .tour-chip-amount,
+.tour-chip.is-locked .tour-chip-amount {
+  color: var(--gray-400);
+}
+
+/* つながりの一覧 */
+.tour-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tour-node {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--gray-100);
+  border-left: 4px solid var(--gray-200);
+}
+
+.tour-node.is-acquired {
+  background: #FFF7E6;
+  border-left-color: #E08A00;
+}
+
+.tour-node.is-used {
+  border-left-color: var(--gray-400);
+}
+
+.tour-node-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour-node-status {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--gray-200);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.tour-node.is-acquired .tour-node-status {
+  background: #E08A00;
+  color: var(--white);
+}
+
+.tour-node-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tour-node-amount {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 900;
+  color: #E08A00;
+}
+
+.tour-node.is-locked .tour-node-amount,
+.tour-node.is-used .tour-node-amount {
+  color: var(--gray-400);
+}
+
+.tour-node-next {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.stamp-hero .tour-countdown {
+  font-size: 13px;
+}
+
+/* 回遊クーポンのページの上のカード（オレンジ） */
+.stamp-hero.is-tour {
+  background: linear-gradient(135deg, #D97A00, #F0A43A);
+  box-shadow: 0 4px 20px rgba(217, 122, 0, 0.25);
+}
+
+/* ページの下のスタンプラリー */
+.stamp-rally-hero {
+  margin-top: 28px;
+}
+
+.stamp-route-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stamp-route-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stamp-route-count {
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #C2185B;
+}
+
+.stamp-route-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.stamp-route-reward {
+  font-size: 12px;
+  font-weight: 700;
+  color: #AD1457;
+}
+
+.stamp-route-link {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #C2185B;
+}
+
+/* クーポン一覧（回遊クーポンだけのとき）の、回遊クーポンのページへの入口 */
+.tour-page-link {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: 1.5px solid #C2185B;
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.tour-page-link[hidden] {
+  display: none;
+}
+
+.tour-page-link-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tour-page-link-text strong {
+  font-size: 14px;
+  color: #AD1457;
+}
+
+.tour-page-link-text span {
+  font-size: 11px;
+  color: var(--gray-700);
+}

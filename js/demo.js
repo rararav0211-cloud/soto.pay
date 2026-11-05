@@ -92,33 +92,27 @@ seedDemoHistory();
 
 // ════════════════════════════
 //  コンソールから使うコマンド
-//  sotoPayDemo.expire()       … 回遊クーポンをすぐ期限切れにする
+//  sotoPayDemo.expire()       … 今日解放した回遊クーポンを、日付が変わったときと同じように消す
 //  sotoPayDemo.reset()        … 獲得状況・回遊クーポン・支払い・予約・スタンプ・ポイント・お知らせ・残高をすべてリセット
 //                               （ページを開き直すと、デモ用の架空の履歴がもう一度入る）
-//  sotoPayDemo.log()          … 送客の記録（どのクーポンが何時に獲得されたか）を表示
+//  sotoPayDemo.log()          … 今日の回遊クーポン（解放した時刻・使った時刻）を表示
 //  sotoPayDemo.payments()     … 支払いの記録を表示
 //  sotoPayDemo.reservations() … 予約の一覧を表示
 //  sotoPayDemo.points()       … ポイントの履歴を表示
 // ════════════════════════════
 window.sotoPayDemo = {
-  expire() {
-    if (tour === null) return;
-    tour.expiresAt = Date.now() - 1;
-    save(KEYS.tour, tour);
-    render();
-  },
   reset() {
     acquired.length = 0;
     usedCoupons.length = 0;
     payments.length = 0;
     reservations.length = 0;
     stampData.stamps = {};
-    stampData.claimed = [];
+    courseData.claimed = {};
+    tourDay = null;
     pointData.balance = 0;
     pointData.history = [];
     notices.length = 0;
     wallet.balance = INITIAL_BALANCE;
-    tour = null;
     try {
       // 会員番号（KEYS.user）は残す
       Object.values(KEYS).filter((key) => key !== KEYS.user).forEach((key) => localStorage.removeItem(key));
@@ -138,12 +132,18 @@ window.sotoPayDemo = {
     console.log(`保有ポイント：${pointData.balance}pt`);
     console.table(pointData.history.map((h) => ({ 内容: h.label, ポイント: h.amount, 日時: new Date(h.at).toLocaleString('ja-JP') })));
   },
+  expire() {
+    tourDay = null;
+    try { localStorage.removeItem(KEYS.tour); } catch (e) {}
+    render();
+  },
   log() {
-    if (tour === null) return console.log('回遊クーポンはまだ解放されていません');
-    console.table(tour.acquired.map((item) => ({
-      起点: tour.origin,
-      クーポン: (COUPONS.find((c) => c.id === item.id) || {}).name,
-      獲得時刻: new Date(item.at).toLocaleString('ja-JP'),
+    const day = getTourDay();
+    console.table(COUPONS.filter((c) => c.kind === 'tour').map((c) => ({
+      クーポン: c.name,
+      状態: getStatus(c),
+      解放: day.unlocked[c.id] ? new Date(day.unlocked[c.id]).toLocaleTimeString('ja-JP') : '',
+      使用: day.used[c.id] ? new Date(day.used[c.id]).toLocaleTimeString('ja-JP') : '',
     })));
   },
 };
