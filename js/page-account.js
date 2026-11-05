@@ -26,7 +26,7 @@
     // 人のアイコン（固定の SVG だけなので innerHTML を使っている）
     avatar.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
     const who = el('div', '');
-    who.append(el('p', 'account-name', '桑都ペイ会員'), el('p', 'account-id', `会員番号 ${user.id.replace(/(\d{4})(?=\d)/g, '$1 ')}`));
+    who.append(el('p', 'account-name', USER_NAME), el('p', 'account-id', `会員番号 ${user.id.replace(/(\d{4})(?=\d)/g, '$1 ')}`));
     head.append(avatar, who);
 
     const nums = el('div', 'account-nums');

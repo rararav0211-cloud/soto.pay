@@ -127,6 +127,9 @@ const MERCHANT_CATEGORIES = [
   { id: 'transport',  label: '交通' },
 ];
 
+// アカウント画面に出す利用者の名前（デモ用）
+const USER_NAME = '中大たかお';
+
 // ホームに表示するおすすめクーポンの最大数
 const HOME_COUPON_LIMIT = 5;
 
