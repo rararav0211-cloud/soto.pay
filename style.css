@@ -422,8 +422,12 @@ body {
 }
 
 .nav-item.pay-nav {
-  color: var(--green-primary);
   margin-top: -18px;
+}
+
+/* 「支払う」の文字は、支払うページにいるときだけ緑にする（丸いボタンはいつも緑） */
+.nav-item.pay-nav.active {
+  color: var(--green-primary);
 }
 
 .pay-circle {
