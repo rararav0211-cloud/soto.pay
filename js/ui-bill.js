@@ -80,11 +80,8 @@ function openBills() {
           ? '残高不足で引き落とせませんでした。チャージすると引き落とします'
           : `${formatDate(billData.due[bill.id])}に引き落とし`));
         const actions = el('div', 'bill-row-actions');
-        const dueBtn = el('button', 'tour-box-link bill-demo-link', '（デモ）引き落とし日を今日にする');
-        dueBtn.addEventListener('click', () => makeBillDueToday(bill));
         const cancel = el('button', 'tour-box-link bill-cancel-link', '登録を解除');
         cancel.addEventListener('click', () => unregisterBill(bill));
-        if (!failed) actions.append(dueBtn);
         actions.append(cancel);
         sub.append(actions);
         list.append(createBillRow(bill, sub, el('p', 'bill-row-amount', `${bill.amount.toLocaleString()}円`)));

@@ -608,7 +608,7 @@ function unregisterBill(bill) {
   render();
 }
 
-// 引き落とし日を今日にする（発表・テスト用）
+// 引き落とし日を今日にする（発表・テスト用。demo.js の sotoPayDemo.dueToday() から使う）
 function makeBillDueToday(bill) {
   if (!isBillRegistered(bill) || isBillDebited(bill)) return;
   billData.due[bill.id] = todayString();

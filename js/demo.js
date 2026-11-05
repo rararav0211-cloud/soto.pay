@@ -95,6 +95,7 @@ seedDemoHistory();
 //  sotoPayDemo.expire()       … 今日解放した回遊クーポンを、日付が変わったときと同じように消す
 //  sotoPayDemo.reset()        … 獲得状況・回遊クーポン・支払い・予約・スタンプ・ポイント・お知らせ・残高をすべてリセット
 //                               （ページを開き直すと、デモ用の架空の履歴がもう一度入る）
+//  sotoPayDemo.dueToday()     … 登録した公共料金の引き落とし日を今日にする（その場で引き落とされる）
 //  sotoPayDemo.log()          … 今日の回遊クーポン（解放した時刻・使った時刻）を表示
 //  sotoPayDemo.payments()     … 支払いの記録を表示
 //  sotoPayDemo.reservations() … 予約の一覧を表示
@@ -132,6 +133,9 @@ window.sotoPayDemo = {
   points() {
     console.log(`保有ポイント：${pointData.balance}pt`);
     console.table(pointData.history.map((h) => ({ 内容: h.label, ポイント: h.amount, 日時: new Date(h.at).toLocaleString('ja-JP') })));
+  },
+  dueToday() {
+    getUpcomingBills().forEach(makeBillDueToday);
   },
   expire() {
     tourDay = null;
