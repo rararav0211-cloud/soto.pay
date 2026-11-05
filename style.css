@@ -3581,46 +3581,64 @@ button.bill-row:active {
   margin-bottom: 8px;
 }
 
-/* 読み取り中 */
-.bill-scanning {
+.bill-note {
+  text-align: left;
+}
+
+/* 引き落とし予定の行 */
+.bill-row-sub {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 24px 0;
+  gap: 4px;
 }
 
-.bill-barcode {
-  position: relative;
-  width: 220px;
-  height: 70px;
-  background: repeating-linear-gradient(90deg, var(--text-primary) 0 2px, transparent 2px 5px, var(--text-primary) 5px 6px, transparent 6px 9px);
-  overflow: hidden;
-}
-
-/* 読み取りの線が上下に動く */
-.bill-barcode::after {
-  content: '';
-  position: absolute;
-  left: -6px;
-  right: -6px;
-  height: 3px;
-  background: #E53935;
-  box-shadow: 0 0 8px #E53935;
-  animation: bill-scan 0.7s ease-in-out infinite alternate;
-}
-
-@keyframes bill-scan {
-  from { top: 0; }
-  to   { top: calc(100% - 3px); }
-}
-
-.bill-scanning-text {
-  font-size: 14px;
+.bill-row-due.is-failed {
+  color: #C62828;
   font-weight: 700;
+}
+
+.bill-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.bill-demo-link,
+.bill-cancel-link {
+  font-size: 11px;
+}
+
+.bill-cancel-link {
   color: var(--gray-700);
 }
 
-.bill-note {
-  text-align: left;
+.bill-register-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: var(--green-primary);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bill-register-btn:active {
+  transform: scale(0.97);
+}
+
+.bill-row {
+  align-items: flex-start;
+}
+
+.bill-row-amount,
+.bill-register-btn {
+  align-self: center;
+}
+
+.bill-row-actions .tour-box-link {
+  padding: 0;
+  margin: 0;
 }

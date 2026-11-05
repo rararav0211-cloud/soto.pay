@@ -108,7 +108,7 @@ window.sotoPayDemo = {
     reservations.length = 0;
     stampData.stamps = {};
     courseData.claimed = {};
-    billData.paid = {};
+    ['registered', 'due', 'debited', 'failed'].forEach((k) => { billData[k] = {}; });
     tourDay = null;
     pointData.balance = 0;
     pointData.history = [];

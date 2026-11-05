@@ -97,6 +97,7 @@ function chargeWallet(amount) {
   save(KEYS.wallet, wallet);
   updateWalletDisplays();
   addNotice('charge', 'チャージが完了しました', `${amount.toLocaleString()}円をチャージしました。残高：${wallet.balance.toLocaleString()}円`);
+  render(); // 残高不足で止まっていた公共料金の引き落としなども、ここで進める
 }
 
 // 画面にある残高の数字をすべて書きかえる
@@ -545,40 +546,102 @@ function pay(m, amount, points = 0) {
 }
 
 // ════════════════════════════
-//  公共料金・税金の支払い
-//  払込票のバーコードを読み取って、残高から払う
-//  クーポン・ポイントは使えない（スタンプ・回遊クーポンの解放もなし）
+//  公共料金・税金の引き落とし
+//  登録すると、引き落とし日に残高から自動で引き落とす
+//  ・残高が足りない日は引き落とさず「引き落とせませんでした」と1回だけ知らせる
+//    （チャージなどで残高が足りたら、その時点で引き落とす）
+//  ・クーポン・ポイントは使えない（スタンプ・回遊クーポンの解放もなし）
 // ════════════════════════════
-// { paid: { 払込票の id: { at: 支払った時刻, receipt: 受付番号 } } }
-const billData = load(KEYS.bills, { paid: {} });
+// {
+//   registered: { id: 登録した時刻 },
+//   due:        { id: 引き落とし日（「2026-11-17」の形） },
+//   debited:    { id: { at: 引き落とした時刻, receipt: 受付番号 } },
+//   failed:     { id: 引き落とせなかった日 }（お知らせを1回だけにするため）
+// }
+const billData = load(KEYS.bills, {});
+['registered', 'due', 'debited', 'failed'].forEach((k) => { billData[k] = billData[k] || {}; });
 
-function isBillPaid(bill) {
-  return Boolean(billData.paid[bill.id]);
+function saveBills() {
+  save(KEYS.bills, billData);
 }
 
-// 支払期限（「2026-11-17」の形）
-function getBillDue(bill) {
+function isBillRegistered(bill) {
+  return Boolean(billData.registered[bill.id]);
+}
+
+function isBillDebited(bill) {
+  return Boolean(billData.debited[bill.id]);
+}
+
+// 引き落とし予定（登録していて、まだ引き落としていないもの）
+function getUpcomingBills() {
+  return DEMO_BILLS.filter((bill) => isBillRegistered(bill) && !isBillDebited(bill))
+    .sort((a, b) => billData.due[a.id].localeCompare(billData.due[b.id]));
+}
+
+// 引き落とし予定の合計
+function getUpcomingTotal() {
+  return getUpcomingBills().reduce((sum, bill) => sum + bill.amount, 0);
+}
+
+// 引き落としを登録する
+function registerBill(bill) {
+  if (isBillRegistered(bill)) return;
+  billData.registered[bill.id] = Date.now();
   const d = new Date();
   d.setDate(d.getDate() + bill.dueInDays);
-  return toDateString(d);
-}
-
-// 公共料金を払う。結果を返す（失敗したら { ok: false, error }）
-function payBill(bill) {
-  if (isBillPaid(bill)) return { ok: false, error: 'この払込票は支払い済みです' };
-  if (bill.amount > wallet.balance) return { ok: false, error: '残高が足りません' };
-
-  wallet.balance -= bill.amount;
-  save(KEYS.wallet, wallet);
-  const record = { at: Date.now(), receipt: `B${String(Date.now()).slice(-8)}` };
-  billData.paid[bill.id] = record;
-  save(KEYS.bills, billData);
-
-  addNotice('bill', '公共料金の支払いが完了しました',
-    `${bill.issuer}　${bill.title}　${bill.amount.toLocaleString()}円を支払いました（受付番号 ${record.receipt}）。残高：${wallet.balance.toLocaleString()}円`);
+  billData.due[bill.id] = toDateString(d);
+  saveBills();
+  addNotice('bill', '公共料金の引き落としを登録しました',
+    `${bill.issuer}　${bill.title}。${formatDate(billData.due[bill.id])}に${bill.amount.toLocaleString()}円を残高から引き落とします。`);
   render();
-  return { ok: true, record };
 }
+
+// 登録を解除する（引き落とし前のものだけ）
+function unregisterBill(bill) {
+  if (!isBillRegistered(bill) || isBillDebited(bill)) return;
+  delete billData.registered[bill.id];
+  delete billData.due[bill.id];
+  delete billData.failed[bill.id];
+  saveBills();
+  addNotice('bill', '公共料金の引き落としを解除しました', `${bill.issuer}　${bill.title}`);
+  render();
+}
+
+// 引き落とし日を今日にする（発表・テスト用）
+function makeBillDueToday(bill) {
+  if (!isBillRegistered(bill) || isBillDebited(bill)) return;
+  billData.due[bill.id] = todayString();
+  saveBills();
+  render();
+}
+
+// 引き落とし日が来たものを引き落とす（画面を描くたびに呼ぶ）
+function processDueBills() {
+  const today = todayString();
+  getUpcomingBills()
+    .filter((bill) => billData.due[bill.id] <= today)
+    .forEach((bill) => {
+      if (bill.amount > wallet.balance) {
+        if (billData.failed[bill.id] !== today) {
+          billData.failed[bill.id] = today;
+          saveBills();
+          addNotice('bill', '残高不足で公共料金を引き落とせませんでした',
+            `${bill.issuer}　${bill.title}　${bill.amount.toLocaleString()}円。残高：${wallet.balance.toLocaleString()}円。チャージすると、その時点で引き落とします。`);
+        }
+        return;
+      }
+      wallet.balance -= bill.amount;
+      save(KEYS.wallet, wallet);
+      const record = { at: Date.now(), receipt: `B${String(Date.now()).slice(-8)}` };
+      billData.debited[bill.id] = record;
+      delete billData.failed[bill.id];
+      saveBills();
+      addNotice('bill', '公共料金を引き落としました',
+        `${bill.issuer}　${bill.title}　${bill.amount.toLocaleString()}円を残高から引き落としました（受付番号 ${record.receipt}）。残高：${wallet.balance.toLocaleString()}円`);
+    });
+}
+onRender(processDueBills);
 
 // 残高・ポイント・未読の数は、どのページでも描き直す
 onRender(updatePointDisplays);

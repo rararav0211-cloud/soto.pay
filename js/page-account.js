@@ -103,7 +103,7 @@
   function renderMenu() {
     menu.replaceChildren(
       createMenuRow('取引履歴', '支払い・公共料金・チャージ・特典', () => openNotices('取引履歴', MONEY_NOTICE_TYPES)),
-      createMenuRow('公共料金・税金を払う', '水道・電気・ガス・市の税金の払込票で', openBills),
+      createMenuRow('公共料金の引き落とし', getUpcomingBills().length > 0 ? `引き落とし予定 ${getUpcomingBills().length}件・${getUpcomingTotal().toLocaleString()}円` : '水道・電気・ガス・市の税金を残高から自動で', () => openBills()),
       createMenuRow('ポイント履歴', `保有 ${pointData.balance.toLocaleString()}pt`, openPointHistory),
       createMenuRow('お知らせ', `未読 ${notices.filter((n) => !n.read).length}件`, () => openNotices()),
       createMenuRow('クーポン', `使えるクーポン ${getUsableCoupons().length}枚`, 'coupons.html'),
