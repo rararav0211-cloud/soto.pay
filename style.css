@@ -2067,6 +2067,7 @@ a.reserve-btn {
 }
 /* お知らせ：特典 */
 .notice-item.is-reward .notice-icon { background: #C2185B; }
+.notice-item.is-deduct .notice-icon { background: #C62828; }
 
 /* お知らせの本文は改行をそのまま出す */
 .notice-text {

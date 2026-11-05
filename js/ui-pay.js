@@ -183,8 +183,13 @@ function openPay(options = {}) {
       update();
     });
     pointInput.addEventListener('input', () => {
-      pointsText = toDigits(pointInput.value);
+      let digits = toDigits(pointInput.value);
+      // 使える数より多く入れたときは、使える数に直す（金額が入っているときだけ）
+      const max = getPaymentPreview(m, getAmount()).maxPoints;
+      if (getAmount() > 0 && Number(digits) > max) digits = String(max);
+      pointsText = digits;
       pointsAll = false;
+      pointInput.value = digits;
       update();
     });
     allBtn.addEventListener('click', () => {
@@ -212,11 +217,11 @@ function openPay(options = {}) {
       pointHint.hidden = !show;
       if (!show) return;
 
-      // 「全部使う」のとき・使える分より多く入れたときは、入力欄を使える数に直す
-      if (amount > 0 && (pointsAll || Number(pointsText || 0) > preview.maxPoints)) {
-        pointsText = String(preview.maxPoints);
-      }
-      if (pointInput.value !== pointsText) pointInput.value = pointsText;
+      // 入力欄には「実際に使う数」を出す。入力した数（pointsText）は書きかえないので、
+      // お会計を減らして使える数が下がっても、お会計を戻せば入力した数に戻る
+      let shown = pointsText;
+      if (amount > 0 && (pointsAll || pointsText !== '')) shown = String(preview.pointsUsed);
+      if (pointInput.value !== shown) pointInput.value = shown;
       allBtn.classList.toggle('active', amount > 0 && preview.pointsUsed === preview.maxPoints && preview.maxPoints > 0);
 
       pointHint.textContent = amount > 0
@@ -277,7 +282,7 @@ function openPay(options = {}) {
     });
 
     submit.addEventListener('click', () => {
-      const result = pay(m, getAmount(), getPaymentPreview(m, getAmount(), getWantedPoints()).pointsUsed);
+      const result = pay(m, getAmount(), getWantedPoints());
       if (result.ok) fillDone(result);
     });
 
