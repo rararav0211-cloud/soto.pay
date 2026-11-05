@@ -360,6 +360,30 @@ const TOUR_COURSES = [
 ];
 
 // ════════════════════════════
+//  公共料金・税金の支払い（払込票のバーコードを読み取って払う）
+//  BILL_TYPES : 種類（アイコンと名前）
+//  DEMO_BILLS : 見本の払込票（デモでバーコードを読み取ったことにするもの）
+//   id      : 払込票ごとに重ならない英数字（支払い済みの保存に使う）
+//   type    : BILL_TYPES の id / issuer : 請求元 / title : 内容
+//   amount  : 金額（円） / dueInDays : 支払期限が今日から何日後か
+//  ※ 請求元・金額はデモ用の架空のものです
+// ════════════════════════════
+const BILL_TYPES = {
+  water:    { label: '水道',   icon: '<path d="M12 2.7S6 9.4 6 14a6 6 0 0 0 12 0c0-4.6-6-11.3-6-11.3z"/>' },
+  electric: { label: '電気',   icon: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' },
+  gas:      { label: 'ガス',   icon: '<path d="M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8 0 4 3 7 7 7z"/>' },
+  tax:      { label: '税金',   icon: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>' },
+};
+
+const DEMO_BILLS = [
+  { id: 'water-2610',  type: 'water',    issuer: '水道局',   title: '水道・下水道料金（9・10月分）',     amount: 5280,  dueInDays: 12 },
+  { id: 'tax-jumin-3', type: 'tax',      issuer: '八王子市', title: '市・都民税（普通徴収） 第3期',     amount: 12400, dueInDays: 25 },
+  { id: 'tax-nhi-6',   type: 'tax',      issuer: '八王子市', title: '国民健康保険税 第6期',            amount: 8600,  dueInDays: 25 },
+  { id: 'elec-2610',   type: 'electric', issuer: '電力会社', title: '電気料金（10月分）',              amount: 6730,  dueInDays: 18 },
+  { id: 'gas-2610',    type: 'gas',      issuer: 'ガス会社', title: 'ガス料金（10月分）',              amount: 4120,  dueInDays: 20 },
+];
+
+// ════════════════════════════
 //  デモ用の架空の履歴
 //  初めて開いたとき（まだ何も保存されていないとき）に、お知らせ・残高・ポイントへ反映する
 //  残高とポイントは、上から順に計算して最後の値が画面に出る

@@ -1999,6 +1999,7 @@ a.reserve-btn {
 
 .notice-item.is-points .notice-icon  { background: #1565C0; }
 .notice-item.is-charge .notice-icon  { background: #E08A00; }
+.notice-item.is-bill .notice-icon    { background: #1565C0; }
 .notice-item.is-reserve .notice-icon { background: #6A1B9A; }
 
 .notice-body {
@@ -3429,4 +3430,197 @@ a.sheet-btn {
 .tour-page-link-text span {
   font-size: 11px;
   color: var(--gray-700);
+}
+
+/* ════════════════════════════
+   公共料金・税金の支払い
+   ════════════════════════════ */
+/* 支払う画面の入口 */
+.bill-entry {
+  margin: 16px 16px 0;
+  width: calc(100% - 32px);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bill-entry:active {
+  transform: scale(0.99);
+}
+
+.bill-entry-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.bill-entry-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bill-entry-text strong {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.bill-entry-text span {
+  font-size: 12px;
+  color: var(--gray-700);
+}
+
+/* 種類のアイコン */
+.bill-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.bill-icon.is-water    { background: #E1F5FE; color: #0277BD; }
+.bill-icon.is-electric { background: #FFF8E1; color: #F57F17; }
+.bill-icon.is-gas      { background: #FBE9E7; color: #D84315; }
+.bill-icon.is-tax      { background: var(--green-pale); color: var(--green-dark); }
+
+/* 払込票の一覧 */
+.bill-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bill-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+}
+
+button.bill-row {
+  cursor: pointer;
+}
+
+button.bill-row:active {
+  background: var(--gray-100);
+}
+
+.bill-row.is-paid {
+  background: var(--gray-100);
+}
+
+.bill-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bill-row-issuer {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.bill-row-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.bill-row-due {
+  font-size: 11px;
+  color: var(--gray-700);
+}
+
+.bill-row-amount {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.bill-paid summary {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-700);
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+/* 読み取り中 */
+.bill-scanning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 0;
+}
+
+.bill-barcode {
+  position: relative;
+  width: 220px;
+  height: 70px;
+  background: repeating-linear-gradient(90deg, var(--text-primary) 0 2px, transparent 2px 5px, var(--text-primary) 5px 6px, transparent 6px 9px);
+  overflow: hidden;
+}
+
+/* 読み取りの線が上下に動く */
+.bill-barcode::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  height: 3px;
+  background: #E53935;
+  box-shadow: 0 0 8px #E53935;
+  animation: bill-scan 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes bill-scan {
+  from { top: 0; }
+  to   { top: calc(100% - 3px); }
+}
+
+.bill-scanning-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.bill-note {
+  text-align: left;
 }

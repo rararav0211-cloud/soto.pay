@@ -108,6 +108,7 @@ window.sotoPayDemo = {
     reservations.length = 0;
     stampData.stamps = {};
     courseData.claimed = {};
+    billData.paid = {};
     tourDay = null;
     pointData.balance = 0;
     pointData.history = [];

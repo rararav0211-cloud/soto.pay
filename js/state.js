@@ -18,6 +18,7 @@ const KEYS = {
   stamps:       'sotoPayStamps',        // スタンプラリー
   payments:     'sotoPayPayments',      // 支払いの記録
   user:         'sotoPayUser',          // 利用者の番号（支払いコードに使う）
+  bills:        'sotoPayBills',         // 公共料金・税金の支払い済み
   demoSeeded:   'sotoPayDemoSeeded',    // デモ用の履歴を入れたかどうか
 };
 
@@ -44,12 +45,13 @@ const NOTICE_TYPES = {
   charge:  { label: 'チャージ', icon: '<path d="M12 19V5M5 12l7-7 7 7"/>' },
   coupon:  { label: 'クーポン', icon: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>' },
   reward:  { label: '特典',     icon: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>' },
+  bill:    { label: '公共料金', icon: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>' },
   reserve: { label: '予約',     icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' },
   deduct:  { label: '差し引き', icon: '<path d="M12 5v14M19 12l-7 7-7-7"/>' },
 };
 
 // 残高が動いたお知らせの種類（取引履歴に出すもの）
-const MONEY_NOTICE_TYPES = ['payment', 'charge', 'reward', 'deduct'];
+const MONEY_NOTICE_TYPES = ['payment', 'bill', 'charge', 'reward', 'deduct'];
 
 // [{ type, title, body, at, read }]（新しいものが先頭）
 const notices = load(KEYS.notices, []);
@@ -540,6 +542,42 @@ function pay(m, amount, points = 0) {
 
   render();
   return { ok: true, payment, coupon: preview.coupon, stamped, unlocked };
+}
+
+// ════════════════════════════
+//  公共料金・税金の支払い
+//  払込票のバーコードを読み取って、残高から払う
+//  クーポン・ポイントは使えない（スタンプ・回遊クーポンの解放もなし）
+// ════════════════════════════
+// { paid: { 払込票の id: { at: 支払った時刻, receipt: 受付番号 } } }
+const billData = load(KEYS.bills, { paid: {} });
+
+function isBillPaid(bill) {
+  return Boolean(billData.paid[bill.id]);
+}
+
+// 支払期限（「2026-11-17」の形）
+function getBillDue(bill) {
+  const d = new Date();
+  d.setDate(d.getDate() + bill.dueInDays);
+  return toDateString(d);
+}
+
+// 公共料金を払う。結果を返す（失敗したら { ok: false, error }）
+function payBill(bill) {
+  if (isBillPaid(bill)) return { ok: false, error: 'この払込票は支払い済みです' };
+  if (bill.amount > wallet.balance) return { ok: false, error: '残高が足りません' };
+
+  wallet.balance -= bill.amount;
+  save(KEYS.wallet, wallet);
+  const record = { at: Date.now(), receipt: `B${String(Date.now()).slice(-8)}` };
+  billData.paid[bill.id] = record;
+  save(KEYS.bills, billData);
+
+  addNotice('bill', '公共料金の支払いが完了しました',
+    `${bill.issuer}　${bill.title}　${bill.amount.toLocaleString()}円を支払いました（受付番号 ${record.receipt}）。残高：${wallet.balance.toLocaleString()}円`);
+  render();
+  return { ok: true, record };
 }
 
 // 残高・ポイント・未読の数は、どのページでも描き直す
