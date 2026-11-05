@@ -20,6 +20,9 @@
     document.title = '回遊クーポン｜桑都ペイ';
     document.querySelector('.page-title').textContent = '回遊クーポン';
     document.querySelector('.tour-page-link').hidden = false;
+    // ホームの「スタンプラリー」から開くページなので、下のナビは「ホーム」を選択中にする
+    document.querySelector('.bottom-nav .nav-coupon').classList.remove('active');
+    document.querySelector('.bottom-nav a[href="index.html"]').classList.add('active');
     // 回遊クーポンは「獲得する」ではなく、支払いで解放されるので、タブの名前を合わせる
     tabs.forEach((tab) => {
       if (tab.dataset.filter === 'available') tab.textContent = '未解放';
