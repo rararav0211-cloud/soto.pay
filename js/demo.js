@@ -71,8 +71,8 @@ function seedDemoHistory() {
       if (h.points) {
         points += h.points;
         pointData.history.push({ label: `${h.shop}の予約`, amount: h.points, at });
-        notices.unshift({ type: 'points', title: `${h.points.toLocaleString()}ptを獲得しました`,
-          body: `${h.shop}の予約でポイントが付与されました。保有ポイント：${points.toLocaleString()}pt`, at, read });
+        notices.unshift({ type: 'points', title: `${POINT_NAME}を${h.points.toLocaleString()}pt獲得しました`,
+          body: `${h.shop}の予約でポイントが付与されました。宿泊・体験のお店での支払いに使えます。保有：${points.toLocaleString()}pt`, at, read });
       }
     }
   });

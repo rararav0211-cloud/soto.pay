@@ -142,6 +142,12 @@ const RESERVE_TYPES = {
   experience: { title: '体験する', lead: '「桑都」八王子ならではの体験を。日にちと時間を選んで予約できます。' },
 };
 
+// 宿泊・体験ポイント（スライド31・42「宿泊・体験限定の特化型ポイント」）
+//  宿泊・体験の予約でもらえて、宿泊・体験のお店での支払いにだけ使える（1pt＝1円）
+//  POINT_USABLE_TYPES : ポイントが使えるお店の種類（SHOPS の type）
+const POINT_NAME = '宿泊・体験ポイント';
+const POINT_USABLE_TYPES = ['stay', 'experience'];
+
 // 予約でもらえるポイント（予約の種類ごと）
 //  amount : もらえるポイント
 //  per    : 'night' … 1泊ごと / 'person' … 1名ごと

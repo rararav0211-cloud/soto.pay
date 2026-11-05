@@ -33,7 +33,7 @@
     const money = el('div', 'account-num');
     money.append(el('span', 'account-num-label', '使用可能金額'), el('strong', '', `${wallet.balance.toLocaleString()}円`));
     const points = el('div', 'account-num');
-    points.append(el('span', 'account-num-label', '保有ポイント'), el('strong', '', `${pointData.balance.toLocaleString()}pt`));
+    points.append(el('span', 'account-num-label', POINT_NAME), el('strong', '', `${pointData.balance.toLocaleString()}pt`));
     nums.append(money, points);
 
     const actions = el('div', 'card-actions');
@@ -86,7 +86,7 @@
     function fill() {
       resetSheet('ポイント履歴');
       const total = el('p', 'point-box-amount account-point-total');
-      total.append('保有ポイント ', el('strong', '', `${pointData.balance.toLocaleString()}pt`));
+      total.append(`${POINT_NAME} `, el('strong', '', `${pointData.balance.toLocaleString()}pt`));
       const list = el('div', 'notice-list');
       if (pointData.history.length === 0) list.append(el('p', 'notice-empty', 'ポイントの履歴はまだありません'));
       [...pointData.history].reverse().forEach((h) => {
@@ -97,7 +97,8 @@
           `${h.amount > 0 ? '+' : ''}${h.amount.toLocaleString()}pt`));
         list.append(row);
       });
-      sheet.append(...sheetTop(), el('h2', 'sheet-title', 'ポイント履歴'), total, list);
+      const rule = el('p', 'sheet-desc', '宿泊・体験の予約でもらえて、宿泊・体験のお店での支払いにだけ使えるポイントです（1pt＝1円）。');
+      sheet.append(...sheetTop(), el('h2', 'sheet-title', 'ポイント履歴'), rule, total, list);
     }
     openSheet(fill, false);
   }
@@ -105,7 +106,7 @@
   function renderMenu() {
     menu.replaceChildren(
       createMenuRow('取引履歴', '支払い・公共料金・チャージ・特典', () => openNotices('取引履歴', MONEY_NOTICE_TYPES)),
-      createMenuRow('ポイント履歴', `保有 ${pointData.balance.toLocaleString()}pt`, openPointHistory),
+      createMenuRow('ポイント履歴', `${POINT_NAME} ${pointData.balance.toLocaleString()}pt`, openPointHistory),
       createMenuRow('お知らせ', `未読 ${notices.filter((n) => !n.read).length}件`, () => openNotices()),
       createMenuRow('クーポン', `使えるクーポン ${getUsableCoupons().length}枚`, 'coupons.html'),
       createMenuRow('回遊クーポン', getUnlockedToday().length > 0 ? `今日解放 ${getUnlockedToday().length}枚` : '高尾山で使うとクーポンが開く', 'stamp.html')
