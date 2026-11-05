@@ -1,8 +1,7 @@
 // ════════════════════════════════════════
-//  ui-bill.js … 公共料金・税金の引き落とし（支払う画面・アカウントから開く）
-//  ・引き落とし予定（日付・金額）と、残高が足りないときの案内
-//  ・登録できる公共料金 → 登録の確認 → 登録完了
-//  ・引き落とし済み
+//  ui-bill.js … 公共料金・税金の引き落としの部品（bills.html で使う。アカウントから開く）
+//  ・一覧：引き落とし予定（日付・金額）と残高が足りないときの案内／登録できる公共料金／引き落とし済み
+//  ・登録：登録の確認 → 登録完了（下から出るパネル）
 //  引き落としそのものは state.js の processDueBills() が、引き落とし日に自動で行う
 //  ※ 公共料金・税金には、クーポンとポイントは使えない
 // ════════════════════════════════════════
@@ -29,100 +28,88 @@ function createBillRow(bill, sub, right) {
   return row;
 }
 
-function openBills() {
-  // いま出している画面（描き直しても同じ画面のままにするため）
-  let view = { name: 'list', bill: null };
+// ════════════════════════════
+//  一覧（引き落とし予定・登録できる公共料金・引き落とし済み）
+//  box … 一覧を入れる場所（bills.html の main）
+// ════════════════════════════
+function renderBills(box) {
+  box.replaceChildren();
+  const upcoming = getUpcomingBills();
+  const available = DEMO_BILLS.filter((bill) => !isBillRegistered(bill));
+  const debited = DEMO_BILLS.filter(isBillDebited);
 
-  function show(name, bill = null) {
-    view = { name, bill };
-    sheet.scrollTop = 0;
-    fill();
+  box.append(el('p', 'reserve-lead', '登録しておくと、水道・電気・ガスの料金や市の税金が、引き落とし日に桑都ペイの残高から自動で支払われます。払込票を持って出かける必要はありません。'));
+
+  // ── 残高が足りないときの案内 ──
+  const total = getUpcomingTotal();
+  if (upcoming.length > 0 && total > wallet.balance) {
+    const short = total - wallet.balance;
+    const warn = el('div', 'pay-error bill-warn');
+    const chargeBtn = el('button', 'tour-box-btn pay-charge-btn', 'チャージする');
+    chargeBtn.type = 'button';
+    chargeBtn.addEventListener('click', () => openCharge(null, short));
+    warn.append(el('p', 'form-error', `引き落とし予定の合計 ${total.toLocaleString()}円に対して、残高が${short.toLocaleString()}円足りません。引き落とし日までにチャージしてください。`), chargeBtn);
+    box.append(warn);
   }
 
-  function fill() {
-    if (view.name === 'confirm') fillConfirm(view.bill);
-    else if (view.name === 'done') fillDone(view.bill);
-    else fillList();
+  // ── 引き落とし予定 ──
+  const upcomingSection = el('section', 'stamp-section');
+  upcomingSection.append(el('h2', 'stamp-section-title', upcoming.length > 0 ? `引き落とし予定（合計 ${total.toLocaleString()}円）` : '引き落とし予定'));
+  const upcomingList = el('div', 'bill-list');
+  if (upcoming.length === 0) upcomingList.append(el('p', 'notice-empty', '登録している公共料金はありません'));
+  upcoming.forEach((bill) => {
+    const sub = el('div', 'bill-row-sub');
+    const failed = billData.failed[bill.id];
+    sub.append(el('p', failed ? 'bill-row-due is-failed' : 'bill-row-due', failed
+      ? '残高不足で引き落とせませんでした。チャージすると引き落とします'
+      : `${formatDate(billData.due[bill.id])}に引き落とし`));
+    const actions = el('div', 'bill-row-actions');
+    const cancel = el('button', 'tour-box-link bill-cancel-link', '登録を解除');
+    cancel.addEventListener('click', () => unregisterBill(bill));
+    actions.append(cancel);
+    sub.append(actions);
+    upcomingList.append(createBillRow(bill, sub, el('p', 'bill-row-amount', `${bill.amount.toLocaleString()}円`)));
+  });
+  upcomingSection.append(upcomingList);
+  box.append(upcomingSection);
+
+  // ── 登録できる公共料金 ──
+  if (available.length > 0) {
+    const section = el('section', 'stamp-section');
+    section.append(el('h2', 'stamp-section-title', '登録できる公共料金・税金'));
+    const list = el('div', 'bill-list');
+    available.forEach((bill) => {
+      const btn = el('button', 'bill-register-btn', '登録する');
+      btn.addEventListener('click', () => openBillRegister(bill));
+      list.append(createBillRow(bill, el('p', 'bill-row-due', `次の請求 ${bill.amount.toLocaleString()}円`), btn));
+    });
+    section.append(list);
+    box.append(section);
   }
 
-  // ════════════════════════════
-  //  一覧（引き落とし予定・登録できる公共料金・引き落とし済み）
-  // ════════════════════════════
-  function fillList() {
-    resetSheet('公共料金の引き落とし');
-    const upcoming = getUpcomingBills();
-    const available = DEMO_BILLS.filter((bill) => !isBillRegistered(bill));
-    const debited = DEMO_BILLS.filter(isBillDebited);
-
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', '公共料金の引き落とし'),
-      el('p', 'sheet-desc', '登録しておくと、水道・電気・ガスの料金や市の税金が、引き落とし日に桑都ペイの残高から自動で支払われます。払込票を持って出かける必要はありません。'));
-
-    // ── 残高が足りないときの案内 ──
-    const total = getUpcomingTotal();
-    if (upcoming.length > 0 && total > wallet.balance) {
-      const short = total - wallet.balance;
-      const warn = el('div', 'pay-error');
-      const chargeBtn = el('button', 'tour-box-btn pay-charge-btn', 'チャージする');
-      chargeBtn.type = 'button';
-      chargeBtn.addEventListener('click', () => openCharge(() => openBills(), short));
-      warn.append(el('p', 'form-error', `引き落とし予定の合計 ${total.toLocaleString()}円に対して、残高が${short.toLocaleString()}円足りません。引き落とし日までにチャージしてください。`), chargeBtn);
-      sheet.append(warn);
-    }
-
-    // ── 引き落とし予定 ──
-    if (upcoming.length > 0) {
-      sheet.append(el('p', 'bill-section-title', `引き落とし予定（合計 ${total.toLocaleString()}円）`));
-      const list = el('div', 'bill-list');
-      upcoming.forEach((bill) => {
-        const sub = el('div', 'bill-row-sub');
-        const failed = billData.failed[bill.id];
-        sub.append(el('p', failed ? 'bill-row-due is-failed' : 'bill-row-due', failed
-          ? '残高不足で引き落とせませんでした。チャージすると引き落とします'
-          : `${formatDate(billData.due[bill.id])}に引き落とし`));
-        const actions = el('div', 'bill-row-actions');
-        const cancel = el('button', 'tour-box-link bill-cancel-link', '登録を解除');
-        cancel.addEventListener('click', () => unregisterBill(bill));
-        actions.append(cancel);
-        sub.append(actions);
-        list.append(createBillRow(bill, sub, el('p', 'bill-row-amount', `${bill.amount.toLocaleString()}円`)));
-      });
-      sheet.append(list);
-    }
-
-    // ── 登録できる公共料金 ──
-    if (available.length > 0) {
-      sheet.append(el('p', 'bill-section-title', '登録できる公共料金・税金'));
-      const list = el('div', 'bill-list');
-      available.forEach((bill) => {
-        const btn = el('button', 'bill-register-btn', '登録する');
-        btn.addEventListener('click', () => show('confirm', bill));
-        list.append(createBillRow(bill, el('p', 'bill-row-due', `次の請求 ${bill.amount.toLocaleString()}円`), btn));
-      });
-      sheet.append(list);
-    }
-
-    // ── 引き落とし済み ──
-    if (debited.length > 0) {
-      const done = el('details', 'bill-paid');
-      done.append(el('summary', '', `引き落とし済み（${debited.length}件）`));
-      const list = el('div', 'bill-list');
-      debited.forEach((bill) => {
-        const record = billData.debited[bill.id];
-        list.append(createBillRow(bill,
-          el('p', 'bill-row-due', `${formatDateTime(record.at)}・受付番号 ${record.receipt}`),
-          el('p', 'bill-row-amount', `${bill.amount.toLocaleString()}円`)));
-      });
-      done.append(list);
-      sheet.append(done);
-    }
-
-    sheet.append(el('p', 'pay-note bill-note', '公共料金・税金の支払いには、クーポンとポイントは使えません。'));
+  // ── 引き落とし済み ──
+  if (debited.length > 0) {
+    const section = el('section', 'stamp-section');
+    section.append(el('h2', 'stamp-section-title', `引き落とし済み（${debited.length}件）`));
+    const list = el('div', 'bill-list');
+    debited.forEach((bill) => {
+      const record = billData.debited[bill.id];
+      list.append(createBillRow(bill,
+        el('p', 'bill-row-due', `${formatDateTime(record.at)}・受付番号 ${record.receipt}`),
+        el('p', 'bill-row-amount', `${bill.amount.toLocaleString()}円`)));
+    });
+    section.append(list);
+    box.append(section);
   }
 
-  // ════════════════════════════
-  //  登録の確認
-  // ════════════════════════════
-  function fillConfirm(bill) {
+  box.append(el('p', 'pay-note bill-note', '公共料金・税金の支払いには、クーポンとポイントは使えません。'));
+}
+
+// ════════════════════════════
+//  登録（登録の確認 → 登録完了）
+// ════════════════════════════
+function openBillRegister(bill) {
+  function fillConfirm() {
     resetSheet('引き落としの登録');
     const head = el('div', 'pay-head');
     const headInfo = el('div', 'pay-shop-info');
@@ -152,18 +139,15 @@ function openBills() {
     const ok = el('button', 'sheet-btn', 'この内容で登録する');
     ok.addEventListener('click', () => {
       registerBill(bill);
-      show('done', bill);
+      fillDone();
     });
     const back = el('button', 'sheet-link account-back', 'もどる');
-    back.addEventListener('click', () => show('list'));
+    back.addEventListener('click', closeSheet);
 
     sheet.append(...sheetTop(), el('h2', 'sheet-title', '引き落としを登録しますか？'), head, info, howto, ok, back);
   }
 
-  // ════════════════════════════
-  //  登録完了
-  // ════════════════════════════
-  function fillDone(bill) {
+  function fillDone() {
     resetSheet('引き落としの登録完了');
     const info = el('dl', 'sheet-info');
     info.append(
@@ -172,11 +156,11 @@ function openBills() {
       el('dt', '', '金額'), el('dd', '', `${bill.amount.toLocaleString()}円`),
       el('dt', '', '今の残高'), el('dd', '', `${wallet.balance.toLocaleString()}円`)
     );
-    const listBtn = el('button', 'sheet-btn', '引き落としの一覧へ');
-    listBtn.addEventListener('click', () => show('list'));
+    const closeBtn = el('button', 'sheet-btn', '閉じる');
+    closeBtn.addEventListener('click', closeSheet);
     sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
-      el('h2', 'sheet-title reserve-done-title', '引き落としを登録しました'), info, listBtn);
+      el('h2', 'sheet-title reserve-done-title', '引き落としを登録しました'), info, closeBtn);
   }
 
-  openSheet(fill, true); // 引き落とし・チャージで描き直す
+  openSheet(fillConfirm, false);
 }
