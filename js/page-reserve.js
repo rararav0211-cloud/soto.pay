@@ -248,7 +248,7 @@
       const nights = isStay ? Number(data.get('nights')) : null;
       const people = Number(data.get('people'));
       const reservation = {
-        id: `R${String(Date.now()).slice(-6)}`, // 予約番号（デモ用に時刻の下6けた）
+        id: createReservationId(), // 予約番号（いまある予約と重ならない6けた）
         shopId: shop.id,
         shopName: shop.name,
         date,

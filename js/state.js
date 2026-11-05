@@ -246,9 +246,25 @@ function getReservationWhen(r) {
   return r.nights ? `${formatDate(r.date)}から${r.nights}泊` : `${formatDate(r.date)} ${r.time}`;
 }
 
-// これからの予約か（キャンセルしておらず、今日以降）
+// これからの予約か（キャンセルしておらず、来店の時刻をまだ過ぎていない）
+// ・宿泊（時刻なし）… チェックインの日の終わりまで
+// ・食べる・体験する … 予約した時刻まで
 function isUpcomingReservation(r) {
-  return !r.canceledAt && r.date >= todayString();
+  if (r.canceledAt) return false;
+  const today = todayString();
+  if (r.date !== today || !r.time) return r.date >= today;
+  const [hour, minute] = r.time.split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() < hour * 60 + minute;
+}
+
+// 新しい予約番号を作る（いまある予約と重ならないように）
+function createReservationId() {
+  let id;
+  do {
+    id = `R${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`;
+  } while (reservations.some((r) => r.id === id));
+  return id;
 }
 
 // 予約を保存して、お知らせとポイントを出す

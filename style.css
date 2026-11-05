@@ -2789,6 +2789,17 @@ a.action-btn {
   background: #C62828;
 }
 
+/* キャンセルでポイントが差し引かれるときの注意 */
+.point-box.is-warning {
+  background: #FFF3E0;
+  border-left: 4px solid #E65100;
+}
+
+.point-box.is-warning .point-box-text {
+  color: #8A3A00;
+  font-weight: 700;
+}
+
 .account-back {
   width: 100%;
   background: none;

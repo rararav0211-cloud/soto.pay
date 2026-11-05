@@ -52,7 +52,7 @@ function openReservationCancel(r) {
 
     const minus = Math.min(r.points || 0, pointData.balance);
     if (minus > 0) {
-      const warn = el('div', 'point-box');
+      const warn = el('div', 'point-box is-warning');
       warn.append(el('p', 'point-box-text', `この予約でもらった ${minus.toLocaleString()}pt は差し引かれます。`));
       sheet.append(warn);
     }
