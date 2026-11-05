@@ -1,6 +1,6 @@
 // ════════════════════════════════════════
 //  page-stamp.js … 回遊クーポン（stamp.html）だけで使う処理
-//  stamp.html … 今日の回遊クーポン・解放のつながり・おすすめルートの一覧
+//  stamp.html … 今日の回遊クーポン・解放のつながり・スタンプラリー（おすすめルートごとのスタンプカード）
 //  stamp.html?course=ルートの id … おすすめルートの詳細
 //   ・上のカード（進み具合）
 //   ・行程（プランのとおり。スタンプのない立ち寄り先も出す）
@@ -83,7 +83,7 @@
     const usable = COUPONS.filter((c) => c.kind === 'tour' && getStatus(c) === 'acquired');
 
     // ── 上のカード ──
-    const hero = el('section', 'stamp-hero');
+    const hero = el('section', 'stamp-hero is-tour');
     const countText = el('p', 'stamp-count');
     countText.append(el('strong', '', usable.length), ' 枚 使えます');
     hero.append(
@@ -124,27 +124,90 @@
     });
     mapSection.append(tree);
 
-    // ── おすすめルート ──
-    const section = createSection('おすすめルート',
-      `メンバーが考えた周回プランです。半分回ると${TOUR_REWARDS.half.toLocaleString()}円分、全部回ると${TOUR_REWARDS.complete.toLocaleString()}円分の特典（期間：${TOUR_RALLY.period}）。`);
-    const list = el('div', 'course-list');
-    TOUR_COURSES.forEach((c) => {
-      const count = getCourseCount(c);
-      const card = el('a', count > 0 ? 'course-card is-joined' : 'course-card');
-      card.href = getCourseUrl(c);
+    page.append(hero, usableSection, mapSection, ...createStampRally());
+  }
 
-      const foot = el('div', 'course-card-foot');
-      foot.append(el('span', 'course-card-budget', `予算 ${c.budget}`),
-        el('span', 'course-card-count', `スタンプ ${count} / ${c.spots.length}`));
+  // ════════════════════════════
+  //  スタンプラリー（一覧ページの下の方）
+  //  前のスタンプラリーと同じ見た目：ピンクのカード ＋ ルートごとの丸いスタンプカード
+  // ════════════════════════════
+  // おすすめルートに入っているお店（重なりなし）
+  function getAllStampSpots() {
+    const spots = [];
+    TOUR_COURSES.forEach((c) => getCourseSpots(c).forEach((m) => {
+      if (!spots.includes(m) && !spots.some((s) => s.key === m.key)) spots.push(m);
+    }));
+    return spots;
+  }
 
-      card.append(createCourseLabels(c), el('p', 'course-card-title', c.title), el('p', 'course-card-catch', c.catch));
-      if (count > 0) card.append(createProgress(c, count));
-      card.append(foot);
-      list.append(card);
+  // 丸いスタンプが並ぶカード
+  function createStampCard(spots) {
+    const card = el('div', 'stamp-card');
+    spots.forEach((m, i) => {
+      const done = hasStamp(m);
+      const cell = el('button', done ? 'stamp-cell is-done' : 'stamp-cell');
+      cell.setAttribute('aria-label', `${m.name}${done ? '（スタンプ獲得済み）' : ''}`);
+      cell.append(el('span', 'stamp-mark', done ? '済' : String(i + 1)), el('span', 'stamp-name', m.name));
+      cell.addEventListener('click', () => openMerchant(m));
+      card.append(cell);
     });
-    section.append(list);
+    return card;
+  }
 
-    page.append(hero, usableSection, mapSection, section);
+  // ルートの次の特典までの案内
+  function getRewardText(c, count) {
+    const rewards = getCourseRewards(c);
+    const ready = rewards.filter((r) => count >= r.count && !isRewardClaimed(c, r));
+    if (ready.length) return `🎁 ${ready[0].label}を受け取れます`;
+    const next = rewards.find((r) => count < r.count);
+    if (next) return `あと${next.count - count}個で${next.label}`;
+    return '✓ 特典をすべて受け取りました';
+  }
+
+  function createStampRally() {
+    const all = getAllStampSpots();
+    const total = all.length;
+    const count = all.filter(hasStamp).length;
+
+    // ── ピンクのカード ──
+    const hero = el('section', 'stamp-hero stamp-rally-hero');
+    hero.id = 'stamp-rally';
+    const progress = el('div', 'stamp-progress');
+    const bar = el('div', 'stamp-progress-bar');
+    bar.style.width = `${total ? (count / total) * 100 : 0}%`;
+    progress.append(bar);
+    const countText = el('p', 'stamp-count');
+    countText.append(el('strong', '', count), ` / ${total} 個`);
+    hero.append(
+      el('p', 'stamp-hero-title', '桑都めぐりスタンプラリー'),
+      el('p', 'stamp-hero-text', `おすすめルートのお店で桑都ペイを使うとスタンプがたまります。ルートごとに、半分たまると${TOUR_REWARDS.half.toLocaleString()}円分、全部たまると${TOUR_REWARDS.complete.toLocaleString()}円分。`),
+      countText,
+      progress,
+      el('p', 'stamp-hero-period', `期間：${TOUR_RALLY.period}`)
+    );
+
+    // ── ルートごとのスタンプカード ──
+    const sections = TOUR_COURSES.map((c) => {
+      const spots = getCourseSpots(c);
+      const got = spots.filter(hasStamp).length;
+      const section = el('section', 'stamp-section');
+      const head = el('div', 'stamp-route-head');
+      const titleBox = el('div', 'stamp-route-title-box');
+      titleBox.append(createCourseLabels(c), el('h2', 'stamp-section-title', c.title));
+      head.append(titleBox, el('span', 'stamp-route-count', `${got} / ${spots.length}`));
+
+      const foot = el('div', 'stamp-route-foot');
+      foot.append(el('p', 'stamp-route-reward', getRewardText(c, got)));
+      const link = el('a', 'tour-box-link stamp-route-link', '行程・特典を見る');
+      link.href = getCourseUrl(c);
+      foot.append(link);
+
+      section.append(head, el('p', 'stamp-section-note', `予算の目安 ${c.budget}`), createStampCard(spots), foot);
+      return section;
+    });
+
+    return [hero, ...sections];
+
   }
 
   // ════════════════════════════

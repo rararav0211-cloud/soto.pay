@@ -3343,3 +3343,55 @@ a.sheet-btn {
 .stamp-hero .tour-countdown {
   font-size: 13px;
 }
+
+/* 回遊クーポンのページの上のカード（オレンジ） */
+.stamp-hero.is-tour {
+  background: linear-gradient(135deg, #D97A00, #F0A43A);
+  box-shadow: 0 4px 20px rgba(217, 122, 0, 0.25);
+}
+
+/* ページの下のスタンプラリー */
+.stamp-rally-hero {
+  margin-top: 28px;
+}
+
+.stamp-route-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stamp-route-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stamp-route-count {
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #C2185B;
+}
+
+.stamp-route-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.stamp-route-reward {
+  font-size: 12px;
+  font-weight: 700;
+  color: #AD1457;
+}
+
+.stamp-route-link {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #C2185B;
+}
