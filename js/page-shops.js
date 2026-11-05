@@ -41,7 +41,7 @@
         `${m.coupon.discount.toLocaleString()}円引き`));
     }
     if (m.shop) labels.append(el('span', 'coupon-badge is-reserve', '予約可'));
-    if (isStampSpot(m)) labels.append(el('span', 'coupon-badge is-stamp', '回遊コース'));
+    if (isStampSpot(m)) labels.append(el('span', 'coupon-badge is-stamp', '回遊'));
     labels.append(el('span', 'coupon-category', m.genre), el('span', 'coupon-category', AREAS[m.area]));
     titleBox.append(el('p', 'shop-name', m.name), labels);
     // 現在地からの距離（「近い順」のときだけ文字が入る）
@@ -212,7 +212,7 @@
   let userMarker = null;
   const markers = []; // merchants と同じ順番。位置がないお店は null
 
-  // ピンの色：回遊コースのお店＝オレンジ、それ以外＝グレー
+  // ピンの色：回遊クーポンのお店＝オレンジ、それ以外＝グレー
   function getPinClass(m) {
     if (isStampSpot(m)) return 'map-pin is-tour';
     return 'map-pin';

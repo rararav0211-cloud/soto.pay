@@ -1,7 +1,7 @@
 // ════════════════════════════════════════
-//  ui-merchant.js … 加盟店まわり（加盟店一覧・回遊コースで使う）
+//  ui-merchant.js … 加盟店まわり（加盟店一覧・回遊クーポンで使う）
 //  ・COUPONS と SHOPS をまとめて「加盟店」の一覧にする
-//  ・回遊コースのお店とスタンプの数
+//  ・おすすめルートのお店とスタンプの数
 //  ・加盟店の詳細パネル（ここから支払い・予約へ進める）
 // ════════════════════════════════════════
 'use strict';
@@ -71,7 +71,7 @@ function buildMerchants() {
 }
 
 // ════════════════════════════
-//  回遊コース
+//  おすすめルート
 // ════════════════════════════
 // コースのお店（加盟店）を、spots に書いた順で取り出す
 function getCourseSpots(course) {
@@ -86,38 +86,55 @@ function getCourseCount(course) {
   return getCourseSpots(course).filter(hasStamp).length;
 }
 
-// 参加中のコース
-function getJoinedCourses() {
-  return TOUR_COURSES.filter(isJoined);
-}
-
 // コースのページへのリンク先
 function getCourseUrl(course) {
   return `stamp.html?course=${course.id}`;
 }
 
-// 加盟店の詳細・支払い完了に出す「回遊コース」の枠
+// 回遊クーポンを小さく並べる（「次に開くクーポン」など）
+function createCouponChips(coupons) {
+  const list = el('div', 'tour-chips');
+  coupons.forEach((coupon) => {
+    const status = getStatus(coupon);
+    const chip = el('button', `tour-chip is-${status}`);
+    chip.type = 'button';
+    chip.append(el('span', 'tour-chip-name', coupon.name), el('span', 'tour-chip-amount', `${coupon.discount.toLocaleString()}円引き`));
+    chip.addEventListener('click', () => openDetail(coupon));
+    list.append(chip);
+  });
+  return list;
+}
+
+// 加盟店の詳細・支払い完了に出す「回遊」の枠
+//  ・スタンプ ・このお店で払うと解放されるクーポン ・このお店が入っているおすすめルート
 function createCourseBox(m) {
   const box = el('div', 'stamp-box');
   const head = el('div', 'tour-box-head');
-  head.append(el('span', 'coupon-badge is-stamp', 'スタンプ'), el('p', 'tour-box-title', '回遊コースのお店です'));
+  head.append(el('span', 'coupon-badge is-stamp', '回遊'), el('p', 'tour-box-title', '回遊クーポンのお店です'));
   box.append(head);
 
   box.append(el('p', 'tour-box-text', hasStamp(m)
     ? `スタンプ獲得済み（${formatDateTime(stampData.stamps[m.key])}）`
     : 'このお店で桑都ペイを使うと、スタンプが1つ押されます。'));
 
-  // このお店が入っているコースと、それぞれの進み具合
-  const list = el('div', 'course-mini-list');
-  getCoursesFor(m).forEach((course) => {
-    const link = el('a', isJoined(course) ? 'course-mini is-joined' : 'course-mini');
-    link.href = getCourseUrl(course);
-    const name = el('span', 'course-mini-name', course.title);
-    const count = el('span', 'course-mini-count', `${isJoined(course) ? '参加中・' : ''}${getCourseCount(course)} / ${course.spots.length}`);
-    link.append(name, count);
-    list.append(link);
-  });
-  box.append(list);
+  const next = getNextCoupons(m.coupon);
+  if (next.length > 0) {
+    box.append(el('p', 'tour-box-sub', 'ここで支払うと解放されるクーポン（本日23:59まで）'), createCouponChips(next));
+  }
+
+  const courses = getCoursesFor(m);
+  if (courses.length > 0) {
+    box.append(el('p', 'tour-box-sub', 'このお店が入っているおすすめルート'));
+    const list = el('div', 'course-mini-list');
+    courses.forEach((course) => {
+      const link = el('a', 'course-mini');
+      link.href = getCourseUrl(course);
+      link.append(el('span', 'course-mini-name', course.title),
+        el('span', 'course-mini-count', `${getCourseCount(course)} / ${course.spots.length}`));
+      list.append(link);
+    });
+    box.append(list);
+  }
   return box;
 }
 
@@ -143,9 +160,9 @@ function createMerchantCouponBox(coupon) {
   box.append(head, amount);
 
   if (status === 'locked') {
-    box.append(el('p', 'tour-box-text', 'このお店が入っている回遊コースに参加すると届きます。'));
+    box.append(el('p', 'tour-box-text', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます（本日23:59まで）。`));
   } else if (status === 'acquired') {
-    box.append(el('p', 'tour-box-text', 'このお店で桑都ペイを使うと、自動で割引されます。'));
+    box.append(el('p', 'tour-box-text', `このお店で桑都ペイを使うと、自動で割引されます${coupon.kind === 'tour' ? '（本日23:59まで）' : ''}。`));
   }
 
   const actions = el('div', 'tour-box-actions');
@@ -185,7 +202,7 @@ function fillMerchant(m) {
   // クーポンがあるお店
   if (m.coupon) sheet.append(createMerchantCouponBox(m.coupon));
 
-  // 回遊コースのお店
+  // 回遊クーポンのお店（スタンプ・次に開くクーポン・おすすめルート）
   if (isStampSpot(m)) sheet.append(createCourseBox(m));
 
   // このお店で支払う（支払い画面へ）

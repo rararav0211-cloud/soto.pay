@@ -66,13 +66,9 @@
     if (status === 'used') {
       box.append(el('p', 'tour-box-text', 'このクーポンは使用済みです。'));
     } else if (status === 'locked') {
-      box.append(el('p', 'tour-box-text', `回遊コース（${getCourseNamesText(coupon)}）に参加すると届きます。`));
-      const courses = getCoursesForCoupon(coupon);
-      const link = el('a', 'tour-box-link', '回遊コースを見る');
-      link.href = courses.length === 1 ? getCourseUrl(courses[0]) : 'stamp.html';
-      box.append(link);
+      box.append(el('p', 'tour-box-text', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます。解放した日の23:59まで使えます。`));
     } else if (status === 'acquired') {
-      box.append(el('p', 'tour-box-text', `お会計を桑都ペイで支払うと自動で割引されます${isTour ? `（${TOUR_RALLY.period}）` : ''}。`));
+      box.append(el('p', 'tour-box-text', `お会計を桑都ペイで支払うと自動で割引されます${isTour && !isStartCoupon(coupon) ? '（本日23:59まで）' : ''}。`));
       const done = el('button', 'tour-box-btn is-done', '✓ 獲得済み');
       done.type = 'button';
       done.disabled = true;
@@ -85,6 +81,10 @@
         onChange();
       });
       box.append(btn);
+    }
+    // 解放した回遊クーポンは当日限り。別の日の予約なら注意を出す
+    if (isTour && !isStartCoupon(coupon) && status === 'acquired' && dateValue !== todayString()) {
+      box.append(el('p', 'tour-box-warn', `※ 解放した回遊クーポンは本日限りです。${formatDate(dateValue)}の来店には使えません。`));
     }
     return box;
   }

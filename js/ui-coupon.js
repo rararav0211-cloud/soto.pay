@@ -2,7 +2,7 @@
 //  ui-coupon.js … クーポンまわりの画面部品（複数のページで使う）
 //  ・クーポンカード（ホーム・クーポン一覧）
 //  ・クーポン詳細のパネル
-//  ・回遊コースの案内バナー（ホーム・クーポン一覧）
+//  ・回遊クーポンの案内バナー（ホーム・クーポン一覧）
 // ════════════════════════════════════════
 'use strict';
 
@@ -10,7 +10,7 @@ const BUTTON_TEXT = {
   available: '獲得する',
   acquired: '獲得済み',
   used: '使用済み',
-  locked: 'コース参加で届く',
+  locked: '未解放',
 };
 
 // 利用条件の文章（minSpend が 0 や未設定なら「条件なし」）
@@ -20,18 +20,17 @@ function getConditionText(coupon) {
     : '利用条件なし';
 }
 
-// 有効期限の文章（回遊クーポンは回遊コースの期間中）
+// 有効期限の文章（回遊クーポンは解放した日の23:59まで）
 function getExpiryText(coupon, status) {
   if (status === 'used') return '使用済み';
   if (coupon.kind !== 'tour') return 'なし';
-  return TOUR_RALLY.period;
+  if (isStartCoupon(coupon)) return 'いつでも（回遊のはじまりのクーポン）';
+  return status === 'locked' ? '解放した日の23:59まで' : '本日23:59まで';
 }
 
-// 回遊クーポンが入っているコースの名前（「〇〇コースほか2コース」）
-function getCourseNamesText(coupon) {
-  const courses = getCoursesForCoupon(coupon);
-  if (courses.length === 0) return '';
-  return courses.length === 1 ? courses[0].title : `${courses[0].title}ほか${courses.length - 1}コース`;
+// 回遊クーポンの解放のしかた（「〇〇で支払うと解放」）
+function getUnlockText(coupon) {
+  return `${getUnlockFromText(coupon)}で支払うと解放`;
 }
 
 // 「300円引き」の大きい数字つき表示
@@ -75,11 +74,13 @@ function createCouponCard(coupon, isRow) {
   if (coupon.kind === 'tour') {
     badge = el('span', 'coupon-badge', '回遊');
     if (status === 'locked') {
-      note = el('p', 'coupon-note', '回遊コースに参加すると届く');
+      note = el('p', 'coupon-note', getUnlockText(coupon));
     } else if (status === 'used') {
-      note = el('p', 'coupon-note', '使用済みです');
+      note = el('p', 'coupon-note', '本日使用済みです');
+    } else if (isStartCoupon(coupon)) {
+      note = el('p', 'coupon-note is-active', 'ここから回遊スタート');
     } else {
-      note = el('p', 'coupon-note is-active', '回遊コース参加中');
+      note = el('p', 'coupon-note is-active', '本日23:59まで');
     }
   }
 
@@ -137,27 +138,28 @@ function fillDetail(coupon) {
     el('dt', '', '有効期限'), expiry,
     el('dt', '', '対象エリア'), el('dd', '', AREAS[detail.area] || '—')
   );
-  if (coupon.kind === 'tour') info.append(el('dt', '', '回遊コース'), el('dd', '', getCourseNamesText(coupon)));
+  if (coupon.kind === 'tour' && !isStartCoupon(coupon)) info.append(el('dt', '', '解放のしかた'), el('dd', '', getUnlockText(coupon)));
+  if (coupon.kind === 'tour' && getNextCoupons(coupon).length) {
+    info.append(el('dt', '', '使うと次に開く'), el('dd', '', getNextCoupons(coupon).map((c) => c.name).join('・')));
+  }
 
   // 使い方
   const howto = el('div', 'sheet-howto');
   howto.append(el('p', 'sheet-howto-title', '使い方'));
   const steps = el('ol', '');
-  steps.append(coupon.kind === 'tour'
-    ? el('li', '', 'このお店が入っている回遊コースに参加すると、クーポンが届きます')
-    : el('li', '', '「獲得する」を押してクーポンを受け取ります'));
+  if (coupon.kind !== 'tour') steps.append(el('li', '', '「獲得する」を押してクーポンを受け取ります'));
+  else if (!isStartCoupon(coupon)) steps.append(el('li', '', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます（その日の23:59まで）`));
   steps.append(
     el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます'),
     el('li', '', 'または「このクーポンを使う」を押して、スタッフに画面を見せます')
   );
   howto.append(steps);
 
-  // 獲得ボタン（獲得済みなら「このクーポンを使う」、回遊コース未参加ならコースへ）
+  // 獲得ボタン（獲得済みなら「このクーポンを使う」、未解放なら解放のつながりへ）
   let btn;
   if (status === 'locked') {
-    btn = el('a', 'sheet-btn', '回遊コースを見て参加する');
-    const courses = getCoursesForCoupon(coupon);
-    btn.href = courses.length === 1 ? getCourseUrl(courses[0]) : 'stamp.html';
+    btn = el('a', 'sheet-btn', '解放のつながりを見る');
+    btn.href = 'stamp.html#tour-map';
   } else {
     btn = el('button', 'sheet-btn', status === 'acquired' ? 'このクーポンを使う' : BUTTON_TEXT[status]);
     if (status === 'available') {
@@ -322,35 +324,56 @@ function openCouponUse(coupon) {
 }
 
 // ════════════════════════════
-//  回遊コースの案内バナー（ホーム・クーポン一覧の .tour-banner）
-//  参加中のコースがあれば進み具合、なければコースへの参加をうながす
+//  回遊クーポンの案内バナー（ホーム・クーポン一覧の .tour-banner）
+//  今日解放したクーポンがあれば枚数と残り時間、なければ高尾山での支払いをうながす
 // ════════════════════════════
 function renderBanners() {
   document.querySelectorAll('.tour-banner').forEach((banner) => {
     banner.replaceChildren();
-    const joined = getJoinedCourses();
-    banner.classList.toggle('is-active', joined.length > 0);
+    const unlocked = getUnlockedToday();
+    const usable = unlocked.filter((c) => getStatus(c) === 'acquired');
+    banner.classList.toggle('is-active', unlocked.length > 0);
 
-    if (joined.length > 0) {
-      banner.append(el('p', 'tour-title', '回遊コースに参加中'));
-      joined.forEach((course) => {
-        const link = el('a', 'tour-course-row');
-        link.href = getCourseUrl(course);
-        link.append(el('span', 'tour-course-name', course.title),
-          el('strong', 'tour-course-count', `${getCourseCount(course)} / ${course.spots.length}`));
-        banner.append(link);
-      });
+    if (unlocked.length > 0) {
+      banner.append(
+        el('p', 'tour-title', `回遊クーポン ${usable.length}枚 使えます`),
+        el('p', 'tour-text', 'お店で使うと、また次のお店のクーポンが解放されます。本日23:59まで。')
+      );
+      const remain = el('p', 'tour-remaining');
+      remain.append('残り ', el('strong', 'tour-countdown', formatRemaining(getTourExpiry() - Date.now())));
+      const link = el('a', 'tour-demo-btn is-light', '解放されたクーポンを見る');
+      link.href = 'stamp.html';
+      banner.append(remain, link);
       return;
     }
 
+    const starts = TOUR_STARTS.map(findCoupon).map((c) => c.name).join('・');
     banner.append(
-      el('p', 'tour-title', '回遊コースに参加すると、クーポンがまとめて届く'),
-      el('p', 'tour-text', `高尾山から八王子まで、${TOUR_COURSES.length}つのコースから選べます。どこから回ってもOK。お店で使うとスタンプがたまります。`)
+      el('p', 'tour-title', '高尾山から、お店をめぐるほどクーポンが開く'),
+      el('p', 'tour-text', `${starts}で桑都ペイを使うと、次のお店の「回遊」クーポンが解放されます。そのお店で使うと、また次が開きます。`)
     );
-    const link = el('a', 'tour-demo-btn', 'コースを選ぶ');
-    link.href = 'stamp.html';
-    banner.append(link);
+    const demoBtn = el('button', 'tour-demo-btn', '高尾山で支払う');
+    demoBtn.addEventListener('click', () => openPay({ area: 'takao' }));
+    const link = el('a', 'tour-banner-link', 'つながりを見る');
+    link.href = 'stamp.html#tour-map';
+    const actions = el('div', 'tour-banner-actions');
+    actions.append(demoBtn, link);
+    banner.append(actions);
+  });
+}
+
+// 残り時間だけを書きかえる（1分ごと）。日付が変わったら全体を描き直す
+let tourBannerDay = todayString();
+function updateCountdown() {
+  if (tourBannerDay !== todayString()) {
+    tourBannerDay = todayString();
+    render();
+    return;
+  }
+  document.querySelectorAll('.tour-countdown').forEach((node) => {
+    node.textContent = formatRemaining(getTourExpiry() - Date.now());
   });
 }
 
 onRender(renderBanners);
+onEveryMinute(updateCountdown);

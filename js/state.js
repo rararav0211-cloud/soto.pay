@@ -1,6 +1,6 @@
 // ════════════════════════════════════════
 //  state.js … アプリの「状態」（保存しておくデータ）と、それを変える操作
-//  ・お知らせ ・残高 ・ポイント ・クーポン（通常・回遊） ・予約 ・回遊コースとスタンプ ・支払い
+//  ・お知らせ ・残高 ・ポイント ・クーポン（通常・回遊） ・予約 ・回遊クーポンとスタンプ ・支払い
 //  画面の作り方はここには書かず、データの読み書きだけをまとめる
 // ════════════════════════════════════════
 'use strict';
@@ -9,8 +9,8 @@
 const KEYS = {
   coupons:      'sotoPayCoupons',       // 通常クーポンの獲得済み id
   usedCoupons:  'sotoPayUsedCoupons',   // 通常クーポンの使用済み id
-  tour:         'sotoPayTour',          // （前の回遊クーポンの保存。今は使っていない）
-  courses:      'sotoPayCourses',       // 回遊コースの参加・特典の受け取り
+  tour:         'sotoPayTour',          // 今日の回遊クーポン（解放・使用）
+  courses:      'sotoPayCourses',       // おすすめルートの特典の受け取り
   notices:      'sotoPayNotices',       // お知らせ
   wallet:       'sotoPayWallet',        // 残高
   points:       'sotoPayPoints',        // ポイント
@@ -155,58 +155,106 @@ function getPointRuleText(shop) {
 const acquired = load(KEYS.coupons, []);        // 通常クーポンの獲得済み id
 const usedCoupons = load(KEYS.usedCoupons, []); // 通常クーポンの使用済み id
 
-// 回遊コース
-// { joined: { コースの id: 参加した時刻 }, claimed: { コースの id: ['half' / 'complete'] } }
-const courseData = load(KEYS.courses, { joined: {}, claimed: {} });
+// ════════════════════════════
+//  回遊クーポン（つながりで解放）
+//  お店で支払うと、そのお店の「次のお店」の回遊クーポンが解放される
+//  「次のお店」は、おすすめルート（TOUR_COURSES）の spots の並びから作る
+//   例：ルートが ケーブルカー → 薬王院 → 髙橋家 なら、ケーブルカーで払うと薬王院、薬王院で払うと髙橋家が開く
+//  ルートの最初のお店（高尾山）のクーポンは、はじめから使える
+//  解放したクーポンは、その日の23:59まで（次の日は、また高尾山から）
+// ════════════════════════════
 
-function isJoined(course) {
-  return Boolean(courseData.joined[course.id]);
+// ルートの1か所（{ coupon } か { shop }）のクーポン
+function getSpotCoupon(spot) {
+  if (spot.coupon) return COUPONS.find((c) => c.id === spot.coupon) || null;
+  const shop = SHOPS.find((s) => s.id === spot.shop);
+  return shop ? getShopCoupon(shop) : null;
 }
 
-// コースに参加する（コースのお店の回遊クーポンが届く）
-function joinCourse(course) {
-  if (isJoined(course)) return;
-  courseData.joined[course.id] = Date.now();
-  save(KEYS.courses, courseData);
-  const count = getCourseCoupons(course).length;
-  addNotice('coupon', '回遊コースに参加しました',
-    `「${course.title}」に参加しました。コースのお店で使える回遊クーポンが${count}枚届きました。`);
-  render();
+// つながり { クーポンの id: [次のクーポンの id, …] } と、はじまりのクーポンの id
+const TOUR_NEXT = {};
+const TOUR_STARTS = [];
+TOUR_COURSES.forEach((course) => {
+  const ids = course.spots.map(getSpotCoupon).filter(Boolean).map((c) => c.id);
+  if (ids[0] && !TOUR_STARTS.includes(ids[0])) TOUR_STARTS.push(ids[0]);
+  ids.forEach((id, i) => {
+    const next = ids[i + 1];
+    if (!next) return;
+    TOUR_NEXT[id] = TOUR_NEXT[id] || [];
+    if (!TOUR_NEXT[id].includes(next)) TOUR_NEXT[id].push(next);
+  });
+});
+
+function findCoupon(id) {
+  return COUPONS.find((c) => c.id === id);
 }
 
-// コースのお店で使える回遊クーポン
-function getCourseCoupons(course) {
-  return course.spots
-    .map((spot) => {
-      if (spot.coupon) return COUPONS.find((c) => c.id === spot.coupon);
-      const shop = SHOPS.find((s) => s.id === spot.shop);
-      return shop ? getShopCoupon(shop) : null;
-    })
-    .filter((coupon) => coupon && coupon.kind === 'tour');
+// このクーポンのお店で払うと解放されるクーポン
+function getNextCoupons(coupon) {
+  return coupon ? (TOUR_NEXT[coupon.id] || []).map(findCoupon) : [];
 }
 
-// この回遊クーポンが入っているコース
-function getCoursesForCoupon(coupon) {
-  return TOUR_COURSES.filter((course) => getCourseCoupons(course).includes(coupon));
+// このクーポンを解放するお店（のクーポン）
+function getPrevCoupons(coupon) {
+  return Object.keys(TOUR_NEXT).filter((id) => TOUR_NEXT[id].includes(coupon.id)).map(findCoupon);
 }
 
-// 参加しているコースのどれかに入っている回遊クーポンなら、届いている
-function isCouponUnlocked(coupon) {
-  return getCoursesForCoupon(coupon).some(isJoined);
+function isStartCoupon(coupon) {
+  return TOUR_STARTS.includes(coupon.id);
+}
+
+// 「〇〇・△△で支払うと解放」の〇〇・△△
+function getUnlockFromText(coupon) {
+  return getPrevCoupons(coupon).map((c) => c.name).join('・');
+}
+
+// 今日の回遊クーポン { day: '2026-11-05', unlocked: { id: 時刻 }, used: { id: 時刻 } }
+// 日付が変わったら空にする
+let tourDay = load(KEYS.tour, null);
+function getTourDay() {
+  if (!tourDay || tourDay.day !== todayString()) {
+    tourDay = { day: todayString(), unlocked: {}, used: {} };
+  }
+  return tourDay;
+}
+
+// 今日の回遊クーポンの期限（今日の23:59）
+function getTourExpiry() {
+  const d = new Date();
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
+// 今日解放した回遊クーポン（はじまりのクーポンはふくまない）
+function getUnlockedToday() {
+  return Object.keys(getTourDay().unlocked).map(findCoupon).filter(Boolean);
+}
+
+// お店で支払ったときに呼ぶ。次のお店のクーポンを解放して、新しく開いたものを返す
+function unlockNext(coupon) {
+  const day = getTourDay();
+  const opened = getNextCoupons(coupon).filter((c) => !isStartCoupon(c) && !day.unlocked[c.id]);
+  opened.forEach((c) => { day.unlocked[c.id] = Date.now(); });
+  if (opened.length > 0) save(KEYS.tour, day);
+  return opened;
 }
 
 // クーポン1枚の状態
 //  available … 獲得できる（通常クーポン）
-//  acquired  … 獲得済み・届いている（支払いで使える）
-//  used      … 使った
-//  locked    … 回遊クーポンで、まだそのコースに参加していない
+//  acquired  … 獲得済み・解放済み（支払いで使える）
+//  used      … 使った（回遊クーポンは今日使った）
+//  locked    … 回遊クーポンで、まだ解放されていない
 function getStatus(coupon) {
+  if (coupon.kind === 'tour') {
+    const day = getTourDay();
+    if (day.used[coupon.id]) return 'used';
+    return isStartCoupon(coupon) || day.unlocked[coupon.id] ? 'acquired' : 'locked';
+  }
   if (usedCoupons.includes(coupon.id)) return 'used';
-  if (coupon.kind === 'tour') return isCouponUnlocked(coupon) ? 'acquired' : 'locked';
   return acquired.includes(coupon.id) ? 'acquired' : 'available';
 }
 
-// 通常クーポンを獲得する（回遊クーポンはコースに参加すると届く）
+// 通常クーポンを獲得する（回遊クーポンは支払いで解放される）
 function acquireCoupon(coupon) {
   if (coupon.kind === 'tour' || acquired.includes(coupon.id)) return;
   acquired.push(coupon.id);
@@ -216,9 +264,32 @@ function acquireCoupon(coupon) {
 
 // クーポンを使用済みにする
 function markCouponUsed(coupon) {
+  if (coupon.kind === 'tour') {
+    const day = getTourDay();
+    day.used[coupon.id] = Date.now();
+    save(KEYS.tour, day);
+    return;
+  }
   if (usedCoupons.includes(coupon.id)) return;
   usedCoupons.push(coupon.id);
   save(KEYS.usedCoupons, usedCoupons);
+}
+
+// ════════════════════════════
+//  おすすめルート（TOUR_COURSES）の特典
+//  { claimed: { ルートの id: ['half' / 'complete'] } }
+// ════════════════════════════
+const courseData = load(KEYS.courses, { claimed: {} });
+if (!courseData.claimed) courseData.claimed = {};
+
+// ルートのお店で使える回遊クーポン
+function getCourseCoupons(course) {
+  return course.spots.map(getSpotCoupon).filter((coupon) => coupon && coupon.kind === 'tour');
+}
+
+// この回遊クーポンが入っているルート
+function getCoursesForCoupon(coupon) {
+  return TOUR_COURSES.filter((course) => getCourseCoupons(course).includes(coupon));
 }
 
 // お店の人がクーポン使用画面で「使用する」を押したとき
@@ -326,12 +397,12 @@ function isSameSpot(spot, m) {
     (spot.coupon && m.coupon && m.coupon.id === spot.coupon));
 }
 
-// この加盟店が入っている回遊コース
+// この加盟店が入っているおすすめルート
 function getCoursesFor(m) {
   return TOUR_COURSES.filter((course) => course.spots.some((spot) => isSameSpot(spot, m)));
 }
 
-// どれかの回遊コースのお店か（スタンプが押せるか）
+// どれかのおすすめルートのお店か（スタンプが押せるか）
 function isStampSpot(m) {
   return getCoursesFor(m).length > 0;
 }
@@ -355,14 +426,14 @@ function isRewardClaimed(course, reward) {
   return (courseData.claimed[course.id] || []).includes(reward.id);
 }
 
-// 特典を受け取る（残高に足す）
+// おすすめルートの特典を受け取る（残高に足す）
 function claimReward(course, reward) {
   if (isRewardClaimed(course, reward)) return;
   courseData.claimed[course.id] = [...(courseData.claimed[course.id] || []), reward.id];
   save(KEYS.courses, courseData);
   wallet.balance += reward.amount;
   save(KEYS.wallet, wallet);
-  addNotice('reward', '回遊コースの特典を受け取りました',
+  addNotice('reward', 'おすすめルートの特典を受け取りました',
     `「${course.title}」の${reward.label}を受け取りました。残高：${wallet.balance.toLocaleString()}円`);
   render();
 }
@@ -372,8 +443,9 @@ function claimReward(course, reward) {
 //  お店で桑都ペイを使ったときの処理は、すべてこの pay() を通る
 //  1. 使えるクーポンがあれば自動で割引
 //  2. 残高を減らす
-//  3. 回遊コースのお店ならスタンプを押す
-//  4. 支払いの記録とお知らせを残す
+//  3. 回遊のお店ならスタンプを押す
+//  4. 次のお店の回遊クーポンを解放
+//  5. 支払いの記録とお知らせを残す
 // ════════════════════════════
 // [{ id, key, name, amount, discount, couponId, paid, at }]
 const payments = load(KEYS.payments, []);
@@ -419,7 +491,10 @@ function pay(m, amount, points = 0) {
     save(KEYS.stamps, stampData);
   }
 
-  // 4 記録とお知らせ
+  // 4 次のお店の回遊クーポンを解放
+  const unlocked = unlockNext(m.coupon);
+
+  // 5 記録とお知らせ
   const payment = {
     id: `P${String(Date.now()).slice(-6)}`, // 取引番号（デモ用に時刻の下6けた）
     key: m.key,
@@ -435,7 +510,8 @@ function pay(m, amount, points = 0) {
   save(KEYS.payments, payments);
 
   const extras = [];
-  if (stamped) extras.push('回遊コースのスタンプが押されました。');
+  if (stamped) extras.push('回遊のスタンプが押されました。');
+  if (unlocked.length) extras.push(`次のお店の回遊クーポンが${unlocked.length}枚解放されました（本日23:59まで）。`);
   const used = [];
   if (payment.discount) used.push(`クーポン${payment.discount.toLocaleString()}円引き`);
   if (payment.pointsUsed) used.push(`${payment.pointsUsed.toLocaleString()}pt使用`);
@@ -448,7 +524,7 @@ function pay(m, amount, points = 0) {
     `${paidText}。残高：${wallet.balance.toLocaleString()}円${extras.length ? `\n${extras.join('')}` : ''}`);
 
   render();
-  return { ok: true, payment, coupon: preview.coupon, stamped };
+  return { ok: true, payment, coupon: preview.coupon, stamped, unlocked };
 }
 
 // 残高・ポイント・未読の数は、どのページでも描き直す

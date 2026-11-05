@@ -2,7 +2,7 @@
 //  ui-pay.js … 支払いの画面（どのページからも開ける）
 //  1. お店を選ぶ（お店のQRコードを読み取ったときは飛ばす）
 //  2. 金額を入れる（使えるクーポンは自動で割引・ポイントを使うかを選べる）
-//  3. 支払い完了（回遊コースのスタンプのお知らせ）
+//  3. 支払い完了（解放された回遊クーポン・スタンプのお知らせ）
 //  支払いの計算と記録は state.js の pay() が行う
 // ════════════════════════════════════════
 'use strict';
@@ -315,10 +315,36 @@ function openPay(options = {}) {
     sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
       el('h2', 'sheet-title reserve-done-title', '支払いが完了しました'), total, info);
 
-    // 回遊コースのスタンプが押されたとき（このお店が入っているコースの進み具合も出す）
+    // 次のお店の回遊クーポンが解放されたとき
+    if (result.unlocked.length > 0) {
+      const box = el('div', 'tour-box');
+      const head = el('div', 'tour-box-head');
+      head.append(el('span', 'coupon-badge', '回遊'), el('p', 'tour-box-title', `次のお店のクーポンが${result.unlocked.length}枚解放されました`));
+      const link = el('a', 'tour-box-link', '解放されたクーポンを見る');
+      link.href = 'stamp.html';
+      box.append(head, el('p', 'tour-box-text', 'どれかのお店で使うと、また次のクーポンが開きます。本日23:59まで。'),
+        createCouponChips(result.unlocked), link);
+      sheet.append(box);
+    }
+
+    // 回遊のスタンプが押されたとき
     if (result.stamped) {
-      const box = createCourseBox(merchantOf(payment));
-      box.querySelector('.tour-box-title').textContent = '回遊コースのスタンプが押されました';
+      const box = el('div', 'stamp-box');
+      const head = el('div', 'tour-box-head');
+      head.append(el('span', 'coupon-badge is-stamp', 'スタンプ'), el('p', 'tour-box-title', 'スタンプが押されました'));
+      box.append(head);
+      const courses = getCoursesFor(merchantOf(payment));
+      if (courses.length) {
+        const list = el('div', 'course-mini-list');
+        courses.forEach((course) => {
+          const link = el('a', 'course-mini');
+          link.href = getCourseUrl(course);
+          link.append(el('span', 'course-mini-name', course.title),
+            el('span', 'course-mini-count', `${getCourseCount(course)} / ${course.spots.length}`));
+          list.append(link);
+        });
+        box.append(list);
+      }
       sheet.append(box);
     }
 
@@ -357,11 +383,7 @@ function createPayCouponBox(m, amount, onChange) {
   if (status === 'used') {
     box.append(el('p', 'tour-box-text', 'このクーポンは使用済みです。'));
   } else if (status === 'locked') {
-    box.append(el('p', 'tour-box-text', `回遊コース（${getCourseNamesText(coupon)}）に参加すると使えます。`));
-    const link = el('a', 'tour-box-link', '回遊コースを見る');
-    const courses = getCoursesForCoupon(coupon);
-    link.href = courses.length === 1 ? getCourseUrl(courses[0]) : 'stamp.html';
-    box.append(link);
+    box.append(el('p', 'tour-box-text', `${getUnlockFromText(coupon)}で桑都ペイを使うと解放されます。`));
   } else if (status === 'available') {
     box.append(el('p', 'tour-box-text', '獲得すると、この支払いから割引されます。'));
     const btn = el('button', 'tour-box-btn', 'クーポンを獲得する');
@@ -416,7 +438,7 @@ function openCouponPay() {
       if (coupon.kind === 'tour') labels.append(el('span', 'coupon-badge', '回遊'));
       labels.append(el('span', 'coupon-category', AREAS[merchant.area]));
       info.append(labels, el('p', 'pay-shop-name', merchant.name), el('p', 'pay-shop-genre', getConditionText(coupon)));
-      if (coupon.kind === 'tour') info.append(el('p', 'coupon-note is-active', '回遊コース参加中'));
+      if (coupon.kind === 'tour' && !isStartCoupon(coupon)) info.append(el('p', 'coupon-note is-active', '本日23:59まで'));
 
       row.append(discount, info, el('span', 'pay-coupon-arrow', '›'));
       row.addEventListener('click', () => openCouponUse(coupon));

@@ -17,12 +17,12 @@
 //  minSpend    : 利用条件の金額（円）。この金額以上の支払いで使える。条件なしなら 0
 //  category    : 下の CATEGORIES の id のどれか
 //  kind        : 'normal' … いつでも獲得できる通常クーポン
-//                'tour'   … 回遊クーポン（回遊コースに参加すると届く。下の TOUR_COURSES を参照）
+//                'tour'   … 回遊クーポン（前のお店で支払うと解放、当日限り。下の TOUR_COURSES を参照）
 //  recommended : true にするとホームの「おトクなクーポン」に表示
 //  ※ 回遊クーポンの割引額・条件はデモ用の仮のものです
 // ════════════════════════════
 const COUPONS = [
-  // ── 回遊コースのお店（高尾山エリア） ──
+  // ── 回遊クーポンのお店（高尾山エリア） ──
   { id: 'takao-ropeway',  name: '高尾山ケーブルカー・リフト',       discount: 100, minSpend: 500,  category: 'transport', kind: 'tour',   recommended: true },
   { id: 'yakuoin',        name: '高尾山薬王院 授与所',               discount: 100, minSpend: 500,  category: 'leisure',   kind: 'tour',   recommended: false },
   { id: 'saruen',         name: '高尾山さる園・野草園',             discount: 100, minSpend: 500,  category: 'leisure',   kind: 'tour',   recommended: false },
@@ -34,14 +34,14 @@ const COUPONS = [
   { id: 'kiyotaki',       name: '清滝駅前商店街',                    discount: 100, minSpend: 500,  category: 'shopping',  kind: 'tour',   recommended: false },
   { id: 'gokurakuyu',     name: '京王高尾山温泉 極楽湯',            discount: 150, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: true },
 
-  // ── 回遊コースのお店（八王子駅周辺） ──
+  // ── 回遊クーポンのお店（八王子駅周辺） ──
   { id: 'celeo-hachioji', name: 'セレオ八王子',                     discount: 300, minSpend: 3000, category: 'shopping',  kind: 'tour',   recommended: true },
   { id: 'aina-cafe',      name: 'AINA CAFE',                         discount: 100, minSpend: 1000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'dia-coffee',     name: 'Dia.Coffee',                        discount: 100, minSpend: 700,  category: 'food',      kind: 'tour',   recommended: false },
   { id: 'cafe-66',        name: 'カフェ 66',                         discount: 200, minSpend: 2000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'soto-terrace',   name: '桑都テラス',                        discount: 100, minSpend: 1000, category: 'shopping',  kind: 'tour',   recommended: false },
 
-  // ── 回遊コースのお店（八王子市内） ──
+  // ── 回遊クーポンのお店（八王子市内） ──
   { id: 'ukai-toriyama',  name: 'うかい鳥山',                        discount: 500, minSpend: 5000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'ecotown',        name: 'エコタウン八王子大和田店',          discount: 300, minSpend: 3000, category: 'shopping',  kind: 'tour',   recommended: false },
   { id: 'outlet-minami',  name: '三井アウトレットパーク多摩南大沢', discount: 500, minSpend: 5000, category: 'shopping',  kind: 'tour',   recommended: true },
@@ -200,25 +200,26 @@ const SHOPS = [
 ];
 
 // ════════════════════════════
-//  回遊コース（スタンプラリー）
-//  メンバーが考えた周回プランを、1つずつコースにしたもの
-//  ・コースに参加すると、コースのお店の「回遊クーポン」がまとめて届く
-//  ・コースのお店で桑都ペイを使うとスタンプが押される（回る順番は自由）
-//  ・スタンプが半分たまったら・全部たまったら特典（TOUR_REWARDS）
+//  回遊クーポンとおすすめルート
+//  メンバーが考えた周回プランを、1つずつ「おすすめルート」にしたもの
+//  ・ルートの並び（spots）から、回遊クーポンの「つながり」を作る（state.js の TOUR_NEXT）
+//    前のお店で支払うと、次のお店の回遊クーポンが解放される（その日の23:59まで）
+//    ルートの最初のお店（高尾山）のクーポンは、はじめから使える
+//  ・お店で桑都ペイを使うとスタンプが押され、ルートのスタンプが半分・全部たまると特典（TOUR_REWARDS）
 //
-//  TOUR_RALLY : 全体のタイトル・期間
+//  TOUR_RALLY : 全体のタイトル・期間（特典を受け取れる期間）
 //  TOUR_COURSES の1件：
-//   id      : コースごとに重ならない英数字（参加の保存に使う）
-//   title   : コース名 / target : どんな人向けか / season : 時期の注意（なければ書かない）
+//   id      : ルートごとに重ならない英数字（特典の保存に使う）
+//   title   : ルート名 / target : どんな人向けか / season : 時期の注意（なければ書かない）
 //   catch   : ひとことの説明 / budget : 1人あたりの予算の目安
 //   plan    : 行程（スタンプのない立ち寄り先も含めて、プランのとおりに書く）
-//   spots   : スタンプが押せるお店。クーポンのお店は { coupon: COUPONS の id }、予約できるお店は { shop: SHOPS の id }
+//   spots   : 回る順のお店。クーポンのお店は { coupon: COUPONS の id }、予約できるお店は { shop: SHOPS の id }
 //   idea    : プランを考えた人の、地域通貨を使った工夫のアイデア
 //  ※ 期間・特典・クーポンはデモ用の仮のものです
 // ════════════════════════════
 const TOUR_RALLY = {
-  title: '桑都めぐり 回遊コース',
-  description: '好きなコースに参加すると、コースのお店で使える回遊クーポンがまとめて届きます。どこから回ってもOK。お店で桑都ペイを使うとスタンプがたまります。',
+  title: '桑都めぐり 回遊クーポン',
+  description: '高尾山からはじめて、お店で桑都ペイを使うたびに次のお店のクーポンが解放されます。',
   period: '2026年11月1日〜2027年1月31日',
 };
 

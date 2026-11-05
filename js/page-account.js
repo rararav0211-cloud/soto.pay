@@ -3,7 +3,7 @@
 //  ・会員情報（会員番号・残高・ポイント）
 //  ・これからの予約とキャンセル（カードとキャンセルの画面は ui-reservation.js）
 //  ・予約履歴の画面への入口
-//  ・履歴・特典（取引履歴・ポイント履歴・お知らせ・クーポン・回遊コース）
+//  ・履歴・特典（取引履歴・ポイント履歴・お知らせ・クーポン・回遊クーポン）
 //  ・デモをはじめからにする（発表・テスト用）
 // ════════════════════════════════════════
 'use strict';
@@ -106,7 +106,7 @@
       createMenuRow('ポイント履歴', `保有 ${pointData.balance.toLocaleString()}pt`, openPointHistory),
       createMenuRow('お知らせ', `未読 ${notices.filter((n) => !n.read).length}件`, () => openNotices()),
       createMenuRow('クーポン', `使えるクーポン ${getUsableCoupons().length}枚`, 'coupons.html'),
-      createMenuRow('回遊コース', getJoinedCourses().length > 0 ? `参加中 ${getJoinedCourses().length}コース` : 'コースに参加するとクーポンが届く', 'stamp.html')
+      createMenuRow('回遊クーポン', getUnlockedToday().length > 0 ? `今日解放 ${getUnlockedToday().length}枚` : '高尾山で使うとクーポンが開く', 'stamp.html')
     );
   }
 
@@ -128,7 +128,7 @@
         const back = el('button', 'sheet-link account-back', 'もどる');
         back.addEventListener('click', closeSheet);
         sheet.append(...sheetTop(), el('h2', 'sheet-title', 'デモをはじめからにしますか？'),
-          el('p', 'sheet-desc', '残高・ポイント・クーポン・予約・回遊コース・スタンプ・お知らせを、最初の状態に戻します。'), ok, back);
+          el('p', 'sheet-desc', '残高・ポイント・クーポン・予約・回遊クーポン・スタンプ・お知らせを、最初の状態に戻します。'), ok, back);
       }, false);
     });
     demoBox.append(btn, el('p', 'pay-note', '発表・テスト用です'));

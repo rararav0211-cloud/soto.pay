@@ -92,9 +92,10 @@ seedDemoHistory();
 
 // ════════════════════════════
 //  コンソールから使うコマンド
-//  sotoPayDemo.reset()        … 獲得状況・回遊コース・支払い・予約・スタンプ・ポイント・お知らせ・残高をすべてリセット
+//  sotoPayDemo.expire()       … 今日解放した回遊クーポンを、日付が変わったときと同じように消す
+//  sotoPayDemo.reset()        … 獲得状況・回遊クーポン・支払い・予約・スタンプ・ポイント・お知らせ・残高をすべてリセット
 //                               （ページを開き直すと、デモ用の架空の履歴がもう一度入る）
-//  sotoPayDemo.log()          … 回遊コースの記録（参加した時刻・スタンプの数・受け取った特典）を表示
+//  sotoPayDemo.log()          … 今日の回遊クーポン（解放した時刻・使った時刻）を表示
 //  sotoPayDemo.payments()     … 支払いの記録を表示
 //  sotoPayDemo.reservations() … 予約の一覧を表示
 //  sotoPayDemo.points()       … ポイントの履歴を表示
@@ -106,8 +107,8 @@ window.sotoPayDemo = {
     payments.length = 0;
     reservations.length = 0;
     stampData.stamps = {};
-    courseData.joined = {};
     courseData.claimed = {};
+    tourDay = null;
     pointData.balance = 0;
     pointData.history = [];
     notices.length = 0;
@@ -131,12 +132,18 @@ window.sotoPayDemo = {
     console.log(`保有ポイント：${pointData.balance}pt`);
     console.table(pointData.history.map((h) => ({ 内容: h.label, ポイント: h.amount, 日時: new Date(h.at).toLocaleString('ja-JP') })));
   },
+  expire() {
+    tourDay = null;
+    try { localStorage.removeItem(KEYS.tour); } catch (e) {}
+    render();
+  },
   log() {
-    console.table(TOUR_COURSES.map((course) => ({
-      コース: course.title,
-      参加: courseData.joined[course.id] ? new Date(courseData.joined[course.id]).toLocaleString('ja-JP') : '—',
-      スタンプ: `${getCourseCount(course)} / ${course.spots.length}`,
-      特典: (courseData.claimed[course.id] || []).join(', ') || '—',
+    const day = getTourDay();
+    console.table(COUPONS.filter((c) => c.kind === 'tour').map((c) => ({
+      クーポン: c.name,
+      状態: getStatus(c),
+      解放: day.unlocked[c.id] ? new Date(day.unlocked[c.id]).toLocaleTimeString('ja-JP') : '',
+      使用: day.used[c.id] ? new Date(day.used[c.id]).toLocaleTimeString('ja-JP') : '',
     })));
   },
 };

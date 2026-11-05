@@ -3097,38 +3097,6 @@ a.tour-demo-btn {
   color: #C2185B;
 }
 
-/* 参加ボタン */
-.course-join-btn {
-  margin-top: 8px;
-  padding: 13px 0;
-  background: var(--white);
-  color: #AD1457;
-  border: none;
-  border-radius: 12px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 15px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.course-join-btn:active {
-  transform: scale(0.98);
-}
-
-.course-join-note,
-.course-joined {
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.course-joined {
-  margin-top: 6px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  font-weight: 700;
-}
-
 /* 行程 */
 .course-plan {
   list-style: none;
@@ -3220,10 +3188,6 @@ a.tour-demo-btn {
   color: #C2185B;
 }
 
-.course-mini.is-joined {
-  outline: 1.5px solid #C2185B;
-}
-
 /* ホーム・クーポン一覧のバナー（参加中のコース） */
 .tour-course-row {
   display: flex;
@@ -3248,4 +3212,158 @@ a.tour-demo-btn {
 /* コースの中のクーポンは幅がせまいので、ボタンを消して状態は下の文字で見せる */
 .course-coupons .coupon-btn {
   display: none;
+}
+
+/* ════════════════════════════
+   回遊クーポンのつながり
+   ════════════════════════════ */
+.tour-box-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+/* クーポンを小さく並べる */
+.tour-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tour-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 10px;
+  background: #FFF7E6;
+  border: 1.5px solid #E08A00;
+  border-radius: 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour-chip-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tour-chip-amount {
+  font-size: 11px;
+  font-weight: 900;
+  color: #E08A00;
+}
+
+.tour-chip.is-used,
+.tour-chip.is-locked {
+  background: var(--gray-100);
+  border-color: var(--gray-200);
+}
+
+.tour-chip.is-used .tour-chip-amount,
+.tour-chip.is-locked .tour-chip-amount {
+  color: var(--gray-400);
+}
+
+/* つながりの一覧 */
+.tour-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tour-node {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--gray-100);
+  border-left: 4px solid var(--gray-200);
+}
+
+.tour-node.is-acquired {
+  background: #FFF7E6;
+  border-left-color: #E08A00;
+}
+
+.tour-node.is-used {
+  border-left-color: var(--gray-400);
+}
+
+.tour-node-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour-node-status {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--gray-200);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.tour-node.is-acquired .tour-node-status {
+  background: #E08A00;
+  color: var(--white);
+}
+
+.tour-node-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tour-node-amount {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 900;
+  color: #E08A00;
+}
+
+.tour-node.is-locked .tour-node-amount,
+.tour-node.is-used .tour-node-amount {
+  color: var(--gray-400);
+}
+
+.tour-node-next {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+/* バナーのボタンとリンク */
+.tour-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tour-banner-link {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #B36B00;
+}
+
+.tour-demo-btn.is-light {
+  background: var(--white);
+  color: var(--green-primary);
+}
+
+.stamp-hero .tour-countdown {
+  font-size: 13px;
 }
