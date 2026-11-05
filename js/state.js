@@ -157,11 +157,12 @@ const usedCoupons = load(KEYS.usedCoupons, []); // 通常クーポンの使用�
 
 // ════════════════════════════
 //  回遊クーポン（つながりで解放）
-//  お店で支払うと、そのお店の「次のお店」の回遊クーポンが解放される
-//  「次のお店」は、おすすめルート（TOUR_COURSES）の spots の並びから作る
-//   例：ルートが ケーブルカー → 薬王院 → 髙橋家 なら、ケーブルカーで払うと薬王院、薬王院で払うと髙橋家が開く
-//  ルートの最初のお店（高尾山）のクーポンは、はじめから使える
-//  解放したクーポンは、その日の23:59まで（次の日は、また高尾山から）
+//  ・高尾山エリアのお店で支払うと、八王子駅周辺の回遊クーポン（TOUR_FROM_TAKAO）が解放される
+//  ・お店で支払うと、そのお店の「次のお店」の回遊クーポンが解放される
+//    「次のお店」は、おすすめルート（TOUR_COURSES）の spots の並びから作る
+//    例：ルートが ケーブルカー → 薬王院 → 髙橋家 なら、ケーブルカーで払うと薬王院、薬王院で払うと髙橋家が開く
+//  ・ルートの最初のお店（高尾山）が回遊のはじまり
+//  ・解放したクーポンは、その日の23:59まで（次の日は、また高尾山から）
 // ════════════════════════════
 
 // ルートの1か所（{ coupon } か { shop }）のクーポン
@@ -203,9 +204,16 @@ function isStartCoupon(coupon) {
   return TOUR_STARTS.includes(coupon.id);
 }
 
+// 高尾山エリアで支払うと解放されるクーポンか
+function isFromTakao(coupon) {
+  return TOUR_FROM_TAKAO.includes(coupon.id);
+}
+
 // 「〇〇・△△で支払うと解放」の〇〇・△△
 function getUnlockFromText(coupon) {
-  return getPrevCoupons(coupon).map((c) => c.name).join('・');
+  const names = getPrevCoupons(coupon).map((c) => c.name);
+  if (isFromTakao(coupon)) names.unshift('高尾山エリアのお店');
+  return names.join('・');
 }
 
 // 今日の回遊クーポン { day: '2026-11-05', unlocked: { id: 時刻 }, used: { id: 時刻 } }
@@ -230,10 +238,17 @@ function getUnlockedToday() {
   return Object.keys(getTourDay().unlocked).map(findCoupon).filter(Boolean);
 }
 
-// お店で支払ったときに呼ぶ。次のお店のクーポンを解放して、新しく開いたものを返す
-function unlockNext(coupon) {
+// このお店（加盟店）で支払うと解放される回遊クーポン
+function getUnlocksFor(m) {
+  const next = getNextCoupons(m.coupon);
+  if (m.area === 'takao') TOUR_FROM_TAKAO.map(findCoupon).forEach((c) => { if (!next.includes(c)) next.push(c); });
+  return next.filter((c) => c && c.kind === 'tour' && !isStartCoupon(c));
+}
+
+// お店（加盟店）で支払ったときに呼ぶ。次のお店の回遊クーポンを解放して、新しく開いたものを返す
+function unlockNext(m) {
   const day = getTourDay();
-  const opened = getNextCoupons(coupon).filter((c) => !isStartCoupon(c) && !day.unlocked[c.id]);
+  const opened = getUnlocksFor(m).filter((c) => !day.unlocked[c.id]);
   opened.forEach((c) => { day.unlocked[c.id] = Date.now(); });
   if (opened.length > 0) save(KEYS.tour, day);
   return opened;
@@ -492,7 +507,7 @@ function pay(m, amount, points = 0) {
   }
 
   // 4 次のお店の回遊クーポンを解放
-  const unlocked = unlockNext(m.coupon);
+  const unlocked = unlockNext(m);
 
   // 5 記録とお知らせ
   const payment = {

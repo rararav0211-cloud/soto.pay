@@ -113,11 +113,13 @@ function createCourseBox(m) {
   head.append(el('span', 'coupon-badge is-stamp', '回遊'), el('p', 'tour-box-title', '回遊クーポンのお店です'));
   box.append(head);
 
-  box.append(el('p', 'tour-box-text', hasStamp(m)
-    ? `スタンプ獲得済み（${formatDateTime(stampData.stamps[m.key])}）`
-    : 'このお店で桑都ペイを使うと、スタンプが1つ押されます。'));
+  if (isStampSpot(m)) {
+    box.append(el('p', 'tour-box-text', hasStamp(m)
+      ? `スタンプ獲得済み（${formatDateTime(stampData.stamps[m.key])}）`
+      : 'このお店で桑都ペイを使うと、スタンプが1つ押されます。'));
+  }
 
-  const next = getNextCoupons(m.coupon);
+  const next = getUnlocksFor(m);
   if (next.length > 0) {
     box.append(el('p', 'tour-box-sub', 'ここで支払うと解放されるクーポン（本日23:59まで）'), createCouponChips(next));
   }
@@ -203,7 +205,7 @@ function fillMerchant(m) {
   if (m.coupon) sheet.append(createMerchantCouponBox(m.coupon));
 
   // 回遊クーポンのお店（スタンプ・次に開くクーポン・おすすめルート）
-  if (isStampSpot(m)) sheet.append(createCourseBox(m));
+  if (isStampSpot(m) || getUnlocksFor(m).length > 0) sheet.append(createCourseBox(m));
 
   // このお店で支払う（支払い画面へ）
   const payBtn = el('button', 'sheet-btn', 'このお店で支払う');

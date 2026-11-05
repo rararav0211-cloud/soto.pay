@@ -3007,15 +3007,10 @@ a.action-btn {
    回遊コース（stamp.html）
    ════════════════════════════ */
 /* a タグで作ったボタン（クーポン詳細の「回遊コースを見て参加する」など） */
-a.sheet-btn,
-a.tour-demo-btn {
+a.sheet-btn {
   display: block;
   text-align: center;
   text-decoration: none;
-}
-
-a.tour-demo-btn {
-  align-self: flex-start;
 }
 
 /* ヒーロー内のラベル（白地の上に置く） */
@@ -3343,25 +3338,6 @@ a.tour-demo-btn {
   font-size: 11px;
   line-height: 1.6;
   color: var(--gray-700);
-}
-
-/* バナーのボタンとリンク */
-.tour-banner-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.tour-banner-link {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #B36B00;
-}
-
-.tour-demo-btn.is-light {
-  background: var(--white);
-  color: var(--green-primary);
 }
 
 .stamp-hero .tour-countdown {

@@ -29,7 +29,9 @@ function getExpiryText(coupon, status) {
 }
 
 // 回遊クーポンの解放のしかた（「〇〇で支払うと解放」）
+//  高尾山エリアで開くクーポンは「高尾山で支払うと解放」（カードに入る短さにする）
 function getUnlockText(coupon) {
+  if (isFromTakao(coupon)) return '高尾山で支払うと解放';
   return `${getUnlockFromText(coupon)}で支払うと解放`;
 }
 
@@ -138,7 +140,7 @@ function fillDetail(coupon) {
     el('dt', '', '有効期限'), expiry,
     el('dt', '', '対象エリア'), el('dd', '', AREAS[detail.area] || '—')
   );
-  if (coupon.kind === 'tour' && !isStartCoupon(coupon)) info.append(el('dt', '', '解放のしかた'), el('dd', '', getUnlockText(coupon)));
+  if (coupon.kind === 'tour' && !isStartCoupon(coupon)) info.append(el('dt', '', '解放のしかた'), el('dd', '', `${getUnlockFromText(coupon)}で支払うと解放`));
   if (coupon.kind === 'tour' && getNextCoupons(coupon).length) {
     info.append(el('dt', '', '使うと次に開く'), el('dd', '', getNextCoupons(coupon).map((c) => c.name).join('・')));
   }
@@ -325,40 +327,37 @@ function openCouponUse(coupon) {
 
 // ════════════════════════════
 //  回遊クーポンの案内バナー（ホーム・クーポン一覧の .tour-banner）
-//  今日解放したクーポンがあれば枚数と残り時間、なければ高尾山での支払いをうながす
+//  ※ ホームのこの部分は発表スライドに使っているので、見た目と文を変えないこと
+//  今日解放したクーポンがあれば残り時間、なければ高尾山での支払いをうながす
 // ════════════════════════════
 function renderBanners() {
   document.querySelectorAll('.tour-banner').forEach((banner) => {
     banner.replaceChildren();
     const unlocked = getUnlockedToday();
-    const usable = unlocked.filter((c) => getStatus(c) === 'acquired');
     banner.classList.toggle('is-active', unlocked.length > 0);
 
     if (unlocked.length > 0) {
+      // 配信中：残り時間を出す
+      const fromTakao = unlocked.some(isFromTakao);
       banner.append(
-        el('p', 'tour-title', `回遊クーポン ${usable.length}枚 使えます`),
-        el('p', 'tour-text', 'お店で使うと、また次のお店のクーポンが解放されます。本日23:59まで。')
+        el('p', 'tour-title', fromTakao ? '八王子駅周辺の回遊クーポン配信中' : '回遊クーポン配信中'),
+        el('p', 'tour-text', fromTakao ? '高尾山でのご利用ありがとうございます。本日23:59まで使えます。' : 'お店でのご利用ありがとうございます。本日23:59まで使えます。')
       );
       const remain = el('p', 'tour-remaining');
       remain.append('残り ', el('strong', 'tour-countdown', formatRemaining(getTourExpiry() - Date.now())));
-      const link = el('a', 'tour-demo-btn is-light', '解放されたクーポンを見る');
-      link.href = 'stamp.html';
-      banner.append(remain, link);
+      banner.append(remain);
       return;
     }
 
-    const starts = TOUR_STARTS.map(findCoupon).map((c) => c.name).join('・');
+    // まだ解放していない：高尾山での利用をうながす
     banner.append(
-      el('p', 'tour-title', '高尾山から、お店をめぐるほどクーポンが開く'),
-      el('p', 'tour-text', `${starts}で桑都ペイを使うと、次のお店の「回遊」クーポンが解放されます。そのお店で使うと、また次が開きます。`)
+      el('p', 'tour-title', '高尾山で使うと、八王子駅周辺のクーポンが届く'),
+      el('p', 'tour-text', '高尾山で桑都ペイを使うと、その日限りの「回遊」クーポンが解放されます。')
     );
+    // 高尾山エリアのお店だけを出した支払い画面を開く
     const demoBtn = el('button', 'tour-demo-btn', '高尾山で支払う');
     demoBtn.addEventListener('click', () => openPay({ area: 'takao' }));
-    const link = el('a', 'tour-banner-link', 'つながりを見る');
-    link.href = 'stamp.html#tour-map';
-    const actions = el('div', 'tour-banner-actions');
-    actions.append(demoBtn, link);
-    banner.append(actions);
+    banner.append(demoBtn);
   });
 }
 

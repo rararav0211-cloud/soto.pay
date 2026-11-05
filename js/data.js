@@ -17,25 +17,30 @@
 //  minSpend    : 利用条件の金額（円）。この金額以上の支払いで使える。条件なしなら 0
 //  category    : 下の CATEGORIES の id のどれか
 //  kind        : 'normal' … いつでも獲得できる通常クーポン
-//                'tour'   … 回遊クーポン（前のお店で支払うと解放、当日限り。下の TOUR_COURSES を参照）
+//                'tour'   … 回遊クーポン（高尾山エリアや前のお店で支払うと解放、当日限り。下の TOUR_FROM_TAKAO・TOUR_COURSES を参照）
 //  recommended : true にするとホームの「おトクなクーポン」に表示
 //  ※ 回遊クーポンの割引額・条件はデモ用の仮のものです
 // ════════════════════════════
 const COUPONS = [
   // ── 回遊クーポンのお店（高尾山エリア） ──
-  { id: 'takao-ropeway',  name: '高尾山ケーブルカー・リフト',       discount: 100, minSpend: 500,  category: 'transport', kind: 'tour',   recommended: true },
+  { id: 'takao-ropeway',  name: '高尾山ケーブルカー・リフト',       discount: 100, minSpend: 500,  category: 'transport', kind: 'normal', recommended: true },
   { id: 'yakuoin',        name: '高尾山薬王院 授与所',               discount: 100, minSpend: 500,  category: 'leisure',   kind: 'tour',   recommended: false },
   { id: 'saruen',         name: '高尾山さる園・野草園',             discount: 100, minSpend: 500,  category: 'leisure',   kind: 'tour',   recommended: false },
   { id: 'juichi-chaya',   name: '高尾山 十一丁目茶屋',               discount: 100, minSpend: 500,  category: 'food',      kind: 'tour',   recommended: false },
   { id: 'takahashiya',    name: '高尾山 髙橋家',                     discount: 100, minSpend: 1000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'fumotoya',       name: '高尾山Fumotoya',                    discount: 200, minSpend: 1500, category: 'food',      kind: 'tour',   recommended: false },
-  { id: 'takao599',       name: '高尾599ミュージアム',               discount: 100, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: true },
+  { id: 'takao599',       name: '高尾599ミュージアム',               discount: 100, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: false },
   { id: 'takao-coffee',   name: 'TAKAO COFFEE',                      discount: 100, minSpend: 800,  category: 'food',      kind: 'tour',   recommended: false },
   { id: 'kiyotaki',       name: '清滝駅前商店街',                    discount: 100, minSpend: 500,  category: 'shopping',  kind: 'tour',   recommended: false },
-  { id: 'gokurakuyu',     name: '京王高尾山温泉 極楽湯',            discount: 150, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: true },
+  { id: 'gokurakuyu',     name: '京王高尾山温泉 極楽湯',            discount: 150, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: false },
 
-  // ── 回遊クーポンのお店（八王子駅周辺） ──
+  // ── 回遊クーポンのお店（八王子駅周辺。高尾山エリアで支払うと解放：TOUR_FROM_TAKAO） ──
   { id: 'celeo-hachioji', name: 'セレオ八王子',                     discount: 300, minSpend: 3000, category: 'shopping',  kind: 'tour',   recommended: true },
+  { id: 'tokyu-square',   name: '八王子東急スクエア',               discount: 300, minSpend: 3000, category: 'shopping',  kind: 'tour',   recommended: false },
+  { id: 'mainichi-sauna', name: '毎日サウナ',                       discount: 200, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: true },
+  { id: 'yume-museum',    name: '八王子市夢美術館',                 discount: 100, minSpend: 0,    category: 'leisure',   kind: 'tour',   recommended: false },
+  { id: 'takenoya',       name: '竹の家',                           discount: 100, minSpend: 800,  category: 'food',      kind: 'tour',   recommended: false },
+  { id: 'den',            name: '純喫茶 田園',                      discount: 100, minSpend: 500,  category: 'food',      kind: 'tour',   recommended: false },
   { id: 'aina-cafe',      name: 'AINA CAFE',                         discount: 100, minSpend: 1000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'dia-coffee',     name: 'Dia.Coffee',                        discount: 100, minSpend: 700,  category: 'food',      kind: 'tour',   recommended: false },
   { id: 'cafe-66',        name: 'カフェ 66',                         discount: 200, minSpend: 2000, category: 'food',      kind: 'tour',   recommended: false },
@@ -44,17 +49,12 @@ const COUPONS = [
   // ── 回遊クーポンのお店（八王子市内） ──
   { id: 'ukai-toriyama',  name: 'うかい鳥山',                        discount: 500, minSpend: 5000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'ecotown',        name: 'エコタウン八王子大和田店',          discount: 300, minSpend: 3000, category: 'shopping',  kind: 'tour',   recommended: false },
-  { id: 'outlet-minami',  name: '三井アウトレットパーク多摩南大沢', discount: 500, minSpend: 5000, category: 'shopping',  kind: 'tour',   recommended: true },
+  { id: 'outlet-minami',  name: '三井アウトレットパーク多摩南大沢', discount: 500, minSpend: 5000, category: 'shopping',  kind: 'normal', recommended: true },
   { id: 'isonuma',        name: '磯沼ミルクファーム',                discount: 100, minSpend: 500,  category: 'leisure',   kind: 'tour',   recommended: false },
   { id: 'nippon-isshu',   name: 'にっぽん一周',                      discount: 300, minSpend: 3000, category: 'food',      kind: 'tour',   recommended: false },
   { id: 'ryusenji',       name: '竜泉寺の湯 八王子みなみ野店',       discount: 100, minSpend: 1000, category: 'leisure',   kind: 'tour',   recommended: false },
 
   // ── 通常クーポン（いつでも獲得できる） ──
-  { id: 'tokyu-square',   name: '八王子東急スクエア',               discount: 300, minSpend: 3000, category: 'shopping',  kind: 'normal', recommended: false },
-  { id: 'mainichi-sauna', name: '毎日サウナ',                       discount: 200, minSpend: 1000, category: 'leisure',   kind: 'normal', recommended: true },
-  { id: 'yume-museum',    name: '八王子市夢美術館',                 discount: 100, minSpend: 0,    category: 'leisure',   kind: 'normal', recommended: false },
-  { id: 'takenoya',       name: '竹の家',                           discount: 100, minSpend: 800,  category: 'food',      kind: 'normal', recommended: false },
-  { id: 'den',            name: '純喫茶 田園',                      discount: 100, minSpend: 500,  category: 'food',      kind: 'normal', recommended: false },
   { id: 'iias-takao',     name: 'イーアス高尾',                     discount: 300, minSpend: 3000, category: 'shopping',  kind: 'normal', recommended: false },
   { id: 'yaen-jiro',      name: '野猿二郎',                         discount: 100, minSpend: 1000, category: 'food',      kind: 'normal', recommended: true },
   { id: 'fuji-museum',    name: '東京富士美術館',                   discount: 200, minSpend: 1000, category: 'leisure',   kind: 'normal', recommended: false },
@@ -202,9 +202,10 @@ const SHOPS = [
 // ════════════════════════════
 //  回遊クーポンとおすすめルート
 //  メンバーが考えた周回プランを、1つずつ「おすすめルート」にしたもの
-//  ・ルートの並び（spots）から、回遊クーポンの「つながり」を作る（state.js の TOUR_NEXT）
-//    前のお店で支払うと、次のお店の回遊クーポンが解放される（その日の23:59まで）
-//    ルートの最初のお店（高尾山）のクーポンは、はじめから使える
+//  ・高尾山エリアのお店で支払うと、八王子駅周辺の回遊クーポン（TOUR_FROM_TAKAO）が解放される
+//  ・さらに、ルートの並び（spots）から回遊クーポンの「つながり」を作る（state.js の TOUR_NEXT）
+//    前のお店で支払うと、次のお店の回遊クーポンが解放される
+//  ・解放したクーポンは、その日の23:59まで
 //  ・お店で桑都ペイを使うとスタンプが押され、ルートのスタンプが半分・全部たまると特典（TOUR_REWARDS）
 //
 //  TOUR_RALLY : 全体のタイトル・期間（特典を受け取れる期間）
@@ -222,6 +223,9 @@ const TOUR_RALLY = {
   description: '高尾山からはじめて、お店で桑都ペイを使うたびに次のお店のクーポンが解放されます。',
   period: '2026年11月1日〜2027年1月31日',
 };
+
+// 高尾山エリアのお店で支払うと解放される、八王子駅周辺の回遊クーポン（COUPONS の id）
+const TOUR_FROM_TAKAO = ['celeo-hachioji', 'tokyu-square', 'mainichi-sauna', 'yume-museum', 'takenoya', 'den'];
 
 // 特典：スタンプが半分たまったら（half）と、全部たまったら（complete）残高に入る金額
 const TOUR_REWARDS = { half: 200, complete: 500 };

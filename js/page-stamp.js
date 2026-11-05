@@ -58,18 +58,24 @@
   // ════════════════════════════
   //  一覧（今日の回遊クーポン・つながり・おすすめルート）
   // ════════════════════════════
+  // そのクーポンのお店で支払うと解放されるクーポン（高尾山エリアのお店なら八王子駅周辺の分もふくむ）
+  function getUnlocksOf(coupon) {
+    const m = buildMerchants().find((item) => item.coupon === coupon);
+    return m ? getUnlocksFor(m) : getNextCoupons(coupon);
+  }
+
   // 解放のつながりの順番（はじまりのクーポンから、近い順）
   function getTourOrder() {
     const order = [...TOUR_STARTS];
     for (let i = 0; i < order.length; i++) {
-      (TOUR_NEXT[order[i]] || []).forEach((id) => {
+      getUnlocksOf(findCoupon(order[i])).map((c) => c.id).forEach((id) => {
         if (!order.includes(id)) order.push(id);
       });
     }
     return order.map(findCoupon).filter(Boolean);
   }
 
-  const STATUS_LABEL = { acquired: '使える', used: '使用済み', locked: '未解放' };
+  const STATUS_LABEL = { acquired: '使える', used: '使用済み', locked: '未解放', available: '獲得できる' };
 
   function renderList() {
     page.replaceChildren();
@@ -98,7 +104,7 @@
     usableSection.append(createCouponChips(usable));
 
     // ── 解放のつながり ──
-    const mapSection = createSection('解放のつながり', 'お店で支払うと、→ の先のお店のクーポンが解放されます。');
+    const mapSection = createSection('解放のつながり', 'お店で支払うと、→ の先のお店のクーポンが解放されます。高尾山エリアのお店ならどこで支払っても、八王子駅周辺（セレオ八王子・毎日サウナなど）のクーポンも解放されます。');
     mapSection.id = 'tour-map';
     const tree = el('div', 'tour-tree');
     getTourOrder().forEach((coupon) => {
@@ -111,7 +117,8 @@
         el('span', 'tour-node-amount', `${coupon.discount.toLocaleString()}円引き`));
       top.addEventListener('click', () => openDetail(coupon));
       row.append(top);
-      const next = getNextCoupons(coupon);
+      // 八王子駅周辺の分は、はじまり（高尾山）にだけ書く（ほかの高尾山のお店は下の説明で伝える）
+      const next = isStartCoupon(coupon) ? getUnlocksOf(coupon) : getNextCoupons(coupon).filter((c) => c.kind === 'tour');
       if (next.length) row.append(el('p', 'tour-node-next', `→ ${next.map((c) => c.name).join('・')}`));
       tree.append(row);
     });
