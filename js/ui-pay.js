@@ -1,7 +1,7 @@
 // ════════════════════════════════════════
 //  ui-pay.js … 支払いの画面（どのページからも開ける）
 //  1. お店を選ぶ（お店のQRコードを読み取ったときは飛ばす）
-//  2. 金額を入れる（使えるクーポンは自動で割引）
+//  2. 金額を入れる（使えるクーポンは自動で割引・ポイントを使うかを選べる）
 //  3. 支払い完了（スタンプ・回遊クーポンのお知らせ）
 //  支払いの計算と記録は state.js の pay() が行う
 // ════════════════════════════════════════
@@ -16,6 +16,7 @@ function openPay(options = {}) {
   let merchant = options.merchant || null;
   let amountText = '';
   let query = '';
+  let usePoints = false; // ポイントを使うか（お店を選び直しても覚えておく）
 
   // ════════════════════════════
   //  1. お店を選ぶ
@@ -121,6 +122,7 @@ function openPay(options = {}) {
 
     // 金額を入れるたびに書きかわる部分
     const couponArea = el('div', 'pay-coupon-area');
+    const pointArea = el('div', 'pay-point-area');
     const summary = el('dl', 'sheet-info pay-summary');
     const error = el('div', 'pay-error');
     const submit = el('button', 'sheet-btn', '支払う');
@@ -129,19 +131,46 @@ function openPay(options = {}) {
       return Number(amountText || 0);
     }
 
+    // ポイントを使うかのスイッチ
+    function createPayPointBox(preview) {
+      const box = el('label', 'near-toggle pay-point-toggle');
+      const text = el('div', 'pay-point-text');
+      text.append(el('span', 'near-toggle-text', 'ポイントを使う'),
+        el('span', 'pay-point-sub', pointData.balance > 0
+          ? `保有 ${pointData.balance.toLocaleString()}pt（1pt＝1円）${usePoints && preview.pointsUsed ? `・使用後 ${(pointData.balance - preview.pointsUsed).toLocaleString()}pt` : ''}`
+          : '使えるポイントがありません'));
+      const check = el('input');
+      check.type = 'checkbox';
+      check.setAttribute('role', 'switch');
+      check.checked = usePoints && pointData.balance > 0;
+      check.disabled = pointData.balance === 0;
+      check.addEventListener('change', () => {
+        usePoints = check.checked;
+        update();
+      });
+      const knob = el('span', 'near-toggle-switch');
+      knob.setAttribute('aria-hidden', 'true');
+      box.append(text, check, knob);
+      return box;
+    }
+
     function update() {
       const amount = getAmount();
-      const preview = getPaymentPreview(m, amount);
+      const preview = getPaymentPreview(m, amount, usePoints);
 
       // クーポンの案内
       couponArea.replaceChildren();
       const couponBox = createPayCouponBox(m, amount, update);
       if (couponBox) couponArea.append(couponBox);
 
+      // ポイント
+      pointArea.replaceChildren(createPayPointBox(preview));
+
       // 内訳
       summary.replaceChildren(
         el('dt', '', 'お会計'), el('dd', '', `${amount.toLocaleString()}円`),
         el('dt', '', 'クーポン'), el('dd', preview.discount ? 'pay-discount' : '', preview.discount ? `−${preview.discount.toLocaleString()}円` : 'なし'),
+        el('dt', '', 'ポイント'), el('dd', preview.pointsUsed ? 'pay-discount' : '', preview.pointsUsed ? `−${preview.pointsUsed.toLocaleString()}円（${preview.pointsUsed.toLocaleString()}pt）` : '使わない'),
         el('dt', '', 'お支払い'), el('dd', 'pay-total', `${preview.paid.toLocaleString()}円`),
         el('dt', '', '支払い後の残高'), el('dd', preview.enough ? '' : 'pay-short', `${preview.after.toLocaleString()}円`)
       );
@@ -164,7 +193,9 @@ function openPay(options = {}) {
 
       const ok = amount > 0 && amount <= PAY_MAX && preview.enough;
       submit.disabled = !ok;
-      submit.textContent = ok ? `${preview.paid.toLocaleString()}円を支払う` : '支払う';
+      if (!ok) submit.textContent = '支払う';
+      else if (preview.paid === 0) submit.textContent = 'ポイントだけで支払う';
+      else submit.textContent = `${preview.paid.toLocaleString()}円を支払う`;
     }
 
     // 数字以外は入らないようにする（全角数字は半角に直す）
@@ -180,12 +211,12 @@ function openPay(options = {}) {
     });
 
     submit.addEventListener('click', () => {
-      const result = pay(m, getAmount());
+      const result = pay(m, getAmount(), usePoints);
       if (result.ok) fillDone(result);
     });
 
     update();
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', '支払う'), shopHead, amountBox, presets, couponArea, summary, error, submit);
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', '支払う'), shopHead, amountBox, presets, couponArea, pointArea, summary, error, submit);
     if (!amountText) input.focus();
   }
 
@@ -205,6 +236,7 @@ function openPay(options = {}) {
       el('dt', '', 'お店'), el('dd', '', payment.name),
       el('dt', '', 'お会計'), el('dd', '', `${payment.amount.toLocaleString()}円`),
       el('dt', '', 'クーポン'), el('dd', '', result.coupon ? `${result.coupon.discount.toLocaleString()}円引き` : 'なし'),
+      el('dt', '', 'ポイント'), el('dd', '', payment.pointsUsed ? `${payment.pointsUsed.toLocaleString()}pt使用（残り ${pointData.balance.toLocaleString()}pt）` : '使わない'),
       el('dt', '', '残高'), el('dd', '', `${wallet.balance.toLocaleString()}円`),
       el('dt', '', '日時'), el('dd', '', formatDateTime(payment.at)),
       el('dt', '', '取引番号'), el('dd', '', payment.id)
