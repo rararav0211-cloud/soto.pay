@@ -63,6 +63,20 @@
       <p class="pay-note">お店のレジや入口にある桑都ペイのQRコードを、枠の中に入れてください</p>
       <button class="sheet-btn pay-coupon-btn">クーポンを使う</button>
     </section>
+
+    <!-- 公共料金・税金の引き落とし（登録すると残高から自動で支払う）。画面は js/ui-bill.js -->
+    <button class="bill-entry">
+      <span class="bill-entry-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>
+        </svg>
+      </span>
+      <span class="bill-entry-text">
+        <strong>公共料金の引き落とし</strong>
+        <span>水道・電気・ガス・市の税金を残高から自動で</span>
+      </span>
+      <span class="pay-coupon-arrow">›</span>
+    </button>
   </main>
 
   <nav class="bottom-nav">
@@ -108,6 +122,7 @@
 <script src="js/ui-coupon.js"></script>
 <script src="js/ui-merchant.js"></script>
 <script src="js/ui-pay.js"></script>
+<script src="js/ui-bill.js"></script>
 <script src="js/page-pay.js"></script>
 </body>
 </html>

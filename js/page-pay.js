@@ -3,7 +3,9 @@
 //  ・コードを見せる：自分の支払いコード（QR）を出して、お店に読み取ってもらう
 //  ・QRを読み取る ：カメラでお店のQRコードを読み、そのお店への支払い画面を開く
 //  ・クーポンを使う：獲得済みのクーポンを選び、お店の人に見せる使用画面を開く
+//  ・公共料金の引き落とし：引き落としの登録・予定の画面（js/ui-bill.js）を開く
 //  pay.html?mode=scan で開くと、最初から「QRを読み取る」になる
+//  pay.html?mode=bill で開くと、公共料金の引き落としの画面が開く
 // ════════════════════════════════════════
 'use strict';
 {
@@ -188,6 +190,17 @@
   onRender(updateCouponButtons);
 
   // ════════════════════════════
+  //  公共料金の引き落とし
+  // ════════════════════════════
+  document.querySelector('.bill-entry').addEventListener('click', () => {
+    if (mode === 'scan') {
+      stopScan();
+      showScanMessage('公共料金の引き落としを開いています', true);
+    }
+    openBills();
+  });
+
+  // ════════════════════════════
   //  タブの切り替え
   // ════════════════════════════
   let mode = 'show';
@@ -227,5 +240,7 @@
   });
 
   startApp();
-  selectMode(new URLSearchParams(location.search).get('mode') === 'scan' ? 'scan' : 'show');
+  const startMode = new URLSearchParams(location.search).get('mode');
+  selectMode(startMode === 'scan' ? 'scan' : 'show');
+  if (startMode === 'bill') openBills();
 }

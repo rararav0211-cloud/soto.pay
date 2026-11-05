@@ -70,7 +70,11 @@ document.querySelectorAll('.notification-btn').forEach((btn) => {
 const CHARGE_AMOUNTS = [1000, 3000, 5000, 10000];
 
 function openCharge(onDone, needed = 0) {
-  let selected = CHARGE_AMOUNTS.find((amount) => amount >= needed) || CHARGE_AMOUNTS[CHARGE_AMOUNTS.length - 1];
+  // 足りない額がいちばん大きいボタンより多いときは、足りる額（1,000円単位で切り上げ）のボタンも出す
+  const amounts = needed > CHARGE_AMOUNTS[CHARGE_AMOUNTS.length - 1]
+    ? [...CHARGE_AMOUNTS, Math.ceil(needed / 1000) * 1000]
+    : CHARGE_AMOUNTS;
+  let selected = amounts.find((amount) => amount >= needed) || amounts[amounts.length - 1];
 
   function fillForm() {
     resetSheet('チャージ');
@@ -79,7 +83,7 @@ function openCharge(onDone, needed = 0) {
     now.append('現在の残高：', el('strong', '', `${wallet.balance.toLocaleString()}円`));
 
     const grid = el('div', 'charge-grid');
-    CHARGE_AMOUNTS.forEach((amount) => {
+    amounts.forEach((amount) => {
       const btn = el('button', amount === selected ? 'charge-option active' : 'charge-option', `${amount.toLocaleString()}円`);
       btn.addEventListener('click', () => {
         selected = amount;
