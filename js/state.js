@@ -370,22 +370,24 @@ save(KEYS.user, user);
 
 // 支払う前の計算（画面の「お支払い額」の表示にも使う）
 //  m … 加盟店（buildMerchants の1件） / amount … お会計の金額
-//  usePoints … ポイントを使うか（1pt＝1円。クーポンで割り引いたあとの金額から引く）
-function getPaymentPreview(m, amount, usePoints = false) {
+//  points … 使いたいポイント（1pt＝1円。クーポンで割り引いたあとの金額から引く）
+//            保有ポイントやお支払い額より多いときは、使える分だけ使う
+function getPaymentPreview(m, amount, points = 0) {
   const coupon = getUsableCoupon(m.coupon, amount);
   const discount = coupon ? Math.min(coupon.discount, amount) : 0;
   const afterCoupon = amount - discount;
-  const pointsUsed = usePoints ? Math.min(pointData.balance, afterCoupon) : 0;
+  const maxPoints = Math.min(pointData.balance, afterCoupon); // この支払いで使える最大のポイント
+  const pointsUsed = Math.max(0, Math.min(Math.floor(points) || 0, maxPoints));
   const paid = afterCoupon - pointsUsed;
-  return { coupon, discount, pointsUsed, paid, enough: paid <= wallet.balance, after: wallet.balance - paid };
+  return { coupon, discount, maxPoints, pointsUsed, paid, enough: paid <= wallet.balance, after: wallet.balance - paid };
 }
 
 // 支払う。結果を返す（失敗したら { ok: false, error }）
-function pay(m, amount, usePoints = false) {
+function pay(m, amount, points = 0) {
   if (!Number.isInteger(amount) || amount <= 0) {
     return { ok: false, error: '金額を入力してください' };
   }
-  const preview = getPaymentPreview(m, amount, usePoints);
+  const preview = getPaymentPreview(m, amount, points);
   if (!preview.enough) {
     return { ok: false, error: '残高が足りません' };
   }
