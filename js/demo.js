@@ -118,8 +118,8 @@ window.sotoPayDemo = {
     notices.length = 0;
     wallet.balance = INITIAL_BALANCE;
     try {
-      // 会員番号（KEYS.user）は残す
-      Object.values(KEYS).filter((key) => key !== KEYS.user).forEach((key) => localStorage.removeItem(key));
+      // 会員番号（KEYS.user）と見やすさの設定（KEYS.settings）は残す
+      Object.values(KEYS).filter((key) => key !== KEYS.user && key !== KEYS.settings).forEach((key) => localStorage.removeItem(key));
     } catch (e) {}
     render();
   },

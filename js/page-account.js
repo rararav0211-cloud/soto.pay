@@ -3,6 +3,7 @@
 //  ・会員情報（会員番号・残高・ポイント）
 //  ・これからの予約とキャンセル（カードとキャンセルの画面は ui-reservation.js）
 //  ・予約履歴の画面への入口
+//  ・見やすさ（文字を大きくする）
 //  ・公共料金（引き落としのページへの入口）
 //  ・履歴・特典（取引履歴・ポイント（points.html）・お知らせ・クーポン・回遊クーポン）
 //  ・デモをはじめからにする（発表・テスト用）
@@ -13,6 +14,7 @@
   const reservationBox = document.querySelector('.account-reservations');
   const menu = document.querySelector('.account-menu');
   const billsBox = document.querySelector('.account-bills');
+  const settingsBox = document.querySelector('.account-settings');
   const demoBox = document.querySelector('.account-demo');
 
   // ════════════════════════════
@@ -98,6 +100,26 @@
   }
 
   // ════════════════════════════
+  //  見やすさ：文字を大きくする（スライド24）
+  //  オンにすると、すべての画面の文字とボタンが大きくなる。設定は次に開いたときも残る
+  // ════════════════════════════
+  function renderSettings() {
+    const row = el('label', 'near-toggle account-setting');
+    const text = el('span', 'account-setting-text');
+    text.append(el('span', 'near-toggle-text', '文字を大きくする'),
+      el('span', 'account-setting-sub', 'すべての画面の文字とボタンを大きく表示します'));
+    const check = el('input');
+    check.type = 'checkbox';
+    check.setAttribute('role', 'switch');
+    check.checked = Boolean(settings.largeText);
+    check.addEventListener('change', () => setLargeText(check.checked));
+    const knob = el('span', 'near-toggle-switch');
+    knob.setAttribute('aria-hidden', 'true');
+    row.append(text, check, knob);
+    settingsBox.replaceChildren(row);
+  }
+
+  // ════════════════════════════
   //  公共料金（履歴・特典とは分けて、別のまとまりにする）
   // ════════════════════════════
   function renderBills() {
@@ -135,6 +157,7 @@
   onRender(renderCard);
   onRender(renderReservations);
   onRender(renderBills);
+  renderSettings();
   onRender(renderMenu);
   renderDemo();
   startApp();

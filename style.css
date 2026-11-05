@@ -3747,3 +3747,40 @@ button.bill-row:active {
   font-weight: 900;
   opacity: 1;
 }
+
+/* ════════════════════════════
+   文字を大きくする（アカウントの設定。html に .large-text が付く）
+   スライド24「文字やボタンを大きくする」
+   画面全体を同じ割合で大きくする（文字・ボタン・余白のつり合いを保つため）
+   ════════════════════════════ */
+html.large-text body {
+  zoom: 1.2;
+}
+
+/* 大きくしたぶん、下から出るパネルが画面からはみ出さないように高さを割り戻す */
+html.large-text .sheet {
+  max-height: calc(85vh / 1.2);
+}
+
+/* 小さなラベルが縦に折り返さないように */
+html.large-text .coupon-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* アカウント：見やすさの設定 */
+.account-setting {
+  position: relative;
+  gap: 12px;
+}
+
+.account-setting-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.account-setting-sub {
+  font-size: 12px;
+  color: var(--gray-700);
+}

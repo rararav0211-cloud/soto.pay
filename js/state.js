@@ -19,8 +19,28 @@ const KEYS = {
   payments:     'sotoPayPayments',      // 支払いの記録
   user:         'sotoPayUser',          // 利用者の番号（支払いコードに使う）
   bills:        'sotoPayBills',         // 公共料金・税金の支払い済み
+  settings:     'sotoPaySettings',      // 見やすさの設定（文字を大きくする）
   demoSeeded:   'sotoPayDemoSeeded',    // デモ用の履歴を入れたかどうか
 };
+
+// ════════════════════════════
+//  見やすさの設定（スライド24「文字やボタンを大きくする」）
+//  文字を大きくすると、html に .large-text を付けて画面全体を大きく表示する（style.css）
+// ════════════════════════════
+const settings = load(KEYS.settings, { largeText: false });
+
+function applySettings() {
+  document.documentElement.classList.toggle('large-text', Boolean(settings.largeText));
+}
+
+function setLargeText(on) {
+  settings.largeText = on;
+  save(KEYS.settings, settings);
+  applySettings();
+}
+
+// 読み込んだらすぐに反映する（画面を描く前に大きさを決めておく）
+applySettings();
 
 // ════════════════════════════
 //  データの読み取り（data.js の中身を探す）
