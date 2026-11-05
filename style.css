@@ -3747,3 +3747,74 @@ button.bill-row:active {
   font-weight: 900;
   opacity: 1;
 }
+
+/* ════════════════════════════
+   よくある質問（faq.html）
+   ════════════════════════════ */
+.faq-page {
+  padding-bottom: 24px;
+}
+
+.faq-search-input {
+  min-width: 0;
+}
+
+.faq-chips {
+  margin-top: 12px;
+}
+
+.faq-section {
+  gap: 8px;
+}
+
+.faq-item {
+  border-radius: 12px;
+  background: var(--gray-100);
+}
+
+.faq-q {
+  position: relative;
+  padding: 14px 40px 14px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-q::-webkit-details-marker {
+  display: none;
+}
+
+/* 右の ＋ / − */
+.faq-q::after {
+  content: '＋';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--green-primary);
+  font-weight: 900;
+}
+
+.faq-item[open] .faq-q::after {
+  content: '−';
+}
+
+.faq-a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 14px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+
+.faq-empty {
+  margin: 16px;
+}
+
+.points-help {
+  margin-top: 16px;
+}

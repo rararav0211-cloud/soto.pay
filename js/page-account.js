@@ -5,6 +5,7 @@
 //  ・予約履歴の画面への入口
 //  ・公共料金（引き落としのページへの入口）
 //  ・履歴・特典（取引履歴・ポイント（points.html）・お知らせ・クーポン・回遊クーポン）
+//  ・ヘルプ（よくある質問）
 //  ・デモをはじめからにする（発表・テスト用）
 // ════════════════════════════════════════
 'use strict';
@@ -13,6 +14,7 @@
   const reservationBox = document.querySelector('.account-reservations');
   const menu = document.querySelector('.account-menu');
   const billsBox = document.querySelector('.account-bills');
+  const helpBox = document.querySelector('.account-help');
   const demoBox = document.querySelector('.account-demo');
 
   // ════════════════════════════
@@ -109,6 +111,13 @@
   }
 
   // ════════════════════════════
+  //  ヘルプ：よくある質問（faq.html）
+  // ════════════════════════════
+  function renderHelp() {
+    helpBox.replaceChildren(createMenuRow('よくある質問', '使い方・ポイント・回遊クーポンなど', 'faq.html'));
+  }
+
+  // ════════════════════════════
   //  デモをはじめからにする（demo.js があるときだけ出す）
   // ════════════════════════════
   function renderDemo() {
@@ -136,6 +145,7 @@
   onRender(renderReservations);
   onRender(renderBills);
   onRender(renderMenu);
+  renderHelp();
   renderDemo();
   startApp();
 }

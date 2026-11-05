@@ -63,7 +63,14 @@
     earned.forEach((h) => earnList.append(createHistoryRow(h)));
     earnSection.append(earnList);
 
-    page.append(card, earnSection);
+    // もらい方・使い方は、よくある質問へ
+    const help = el('a', 'tour-page-link points-help');
+    help.href = 'faq.html#points';
+    const helpText = el('span', 'tour-page-link-text');
+    helpText.append(el('strong', '', 'ポイントのもらい方・使い方'), el('span', '', 'よくある質問で見る'));
+    help.append(helpText, el('span', 'pay-coupon-arrow', '›'));
+
+    page.append(card, help, earnSection);
 
     // ── 使った履歴 ──
     const used = [...pointData.history].filter((h) => h.amount < 0).reverse();
