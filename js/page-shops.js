@@ -188,9 +188,11 @@
   function selectGroup(group) {
     nearToggle.checked = group === 'near';
     currentGroup = group;
-    // ボトムナビの「近くのお店」を、近い順のときだけ選択中にする
+    // ボトムナビ：近い順のときは「近くのお店」、それ以外（ホームの「加盟店一覧」から来たとき）は「ホーム」を選択中にする
     const nearNav = document.querySelector('.nav-item.nav-near');
+    const homeNav = document.querySelector('.bottom-nav a[href="index.html"]');
     if (nearNav) nearNav.classList.toggle('active', group === 'near');
+    if (homeNav) homeNav.classList.toggle('active', group !== 'near');
     if (group === 'near') {
       if (!userPos) requestLocation();
       else locationStatus.hidden = false;
