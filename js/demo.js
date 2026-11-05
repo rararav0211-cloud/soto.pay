@@ -70,7 +70,7 @@ function seedDemoHistory() {
         body: `${h.shop}　${getReservationWhen(reservation)}・${h.people}名（予約番号 ${reservation.id}）`, at, read });
       if (h.points) {
         points += h.points;
-        pointData.history.push({ label: `${h.shop}の予約`, amount: h.points, at });
+        pointData.history.push({ label: `${h.shop}の予約`, amount: h.points, at, kind: 'limited' });
         notices.unshift({ type: 'points', title: `${POINT_NAME}を${h.points.toLocaleString()}pt獲得しました`,
           body: `${h.shop}の予約でポイントが付与されました。宿泊・体験のお店での支払いに使えます。保有：${points.toLocaleString()}pt`, at, read });
       }
@@ -80,6 +80,7 @@ function seedDemoHistory() {
   // 履歴の結果を、今の残高とポイントにする
   wallet.balance = balance;
   pointData.balance = points;
+  pointData.limited = points; // デモの履歴のポイントは、すべて予約でもらった宿泊・体験ポイント
   save(KEYS.notices, notices);
   save(KEYS.wallet, wallet);
   save(KEYS.points, pointData);
@@ -112,6 +113,7 @@ window.sotoPayDemo = {
     ['registered', 'due', 'debited', 'failed'].forEach((k) => { billData[k] = {}; });
     tourDay = null;
     pointData.balance = 0;
+    pointData.limited = 0;
     pointData.history = [];
     notices.length = 0;
     wallet.balance = INITIAL_BALANCE;

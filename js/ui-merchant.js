@@ -205,8 +205,8 @@ function fillMerchant(m) {
   if (canUsePointsAt(m)) {
     const box = el('div', 'point-box');
     const amount = el('p', 'point-box-amount');
-    amount.append(`${POINT_NAME}が使えます　保有 `, el('strong', '', `${pointData.balance.toLocaleString()}pt`));
-    box.append(amount, el('p', 'point-box-text', 'このお店で桑都ペイを使うとき、1pt＝1円で支払いに使えます。'));
+    amount.append(`${POINT_NAME}が使えます　保有 `, el('strong', '', `${pointData.limited.toLocaleString()}pt`));
+    box.append(amount, el('p', 'point-box-text', `このお店では、${POINT_NAME}も${NORMAL_POINT_NAME}も、1pt＝1円で支払いに使えます。`));
     sheet.append(box);
   }
 
