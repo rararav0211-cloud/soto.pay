@@ -3,6 +3,7 @@
 //  ・会員情報（会員番号・残高・ポイント）
 //  ・これからの予約とキャンセル（カードとキャンセルの画面は ui-reservation.js）
 //  ・予約履歴の画面への入口
+//  ・公共料金（引き落としのページへの入口）
 //  ・履歴・特典（取引履歴・ポイント履歴・お知らせ・クーポン・回遊クーポン）
 //  ・デモをはじめからにする（発表・テスト用）
 // ════════════════════════════════════════
@@ -11,6 +12,7 @@
   const card = document.querySelector('.account-card');
   const reservationBox = document.querySelector('.account-reservations');
   const menu = document.querySelector('.account-menu');
+  const billsBox = document.querySelector('.account-bills');
   const demoBox = document.querySelector('.account-demo');
 
   // ════════════════════════════
@@ -103,11 +105,21 @@
   function renderMenu() {
     menu.replaceChildren(
       createMenuRow('取引履歴', '支払い・公共料金・チャージ・特典', () => openNotices('取引履歴', MONEY_NOTICE_TYPES)),
-      createMenuRow('公共料金の引き落とし', getUpcomingBills().length > 0 ? `引き落とし予定 ${getUpcomingBills().length}件・${getUpcomingTotal().toLocaleString()}円` : '水道・電気・ガス・市の税金を残高から自動で', 'bills.html'),
       createMenuRow('ポイント履歴', `保有 ${pointData.balance.toLocaleString()}pt`, openPointHistory),
       createMenuRow('お知らせ', `未読 ${notices.filter((n) => !n.read).length}件`, () => openNotices()),
       createMenuRow('クーポン', `使えるクーポン ${getUsableCoupons().length}枚`, 'coupons.html'),
       createMenuRow('回遊クーポン', getUnlockedToday().length > 0 ? `今日解放 ${getUnlockedToday().length}枚` : '高尾山で使うとクーポンが開く', 'stamp.html')
+    );
+  }
+
+  // ════════════════════════════
+  //  公共料金（履歴・特典とは分けて、別のまとまりにする）
+  // ════════════════════════════
+  function renderBills() {
+    billsBox.replaceChildren(
+      createMenuRow('公共料金の引き落とし', getUpcomingBills().length > 0
+        ? `引き落とし予定 ${getUpcomingBills().length}件・${getUpcomingTotal().toLocaleString()}円`
+        : '水道・電気・ガス・市の税金を残高から自動で', 'bills.html')
     );
   }
 
@@ -137,6 +149,7 @@
 
   onRender(renderCard);
   onRender(renderReservations);
+  onRender(renderBills);
   onRender(renderMenu);
   renderDemo();
   startApp();
