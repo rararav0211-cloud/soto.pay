@@ -3002,3 +3002,250 @@ a.action-btn {
   line-height: 1.6;
   color: var(--gray-700);
 }
+
+/* ════════════════════════════
+   回遊コース（stamp.html）
+   ════════════════════════════ */
+/* a タグで作ったボタン（クーポン詳細の「回遊コースを見て参加する」など） */
+a.sheet-btn,
+a.tour-demo-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+a.tour-demo-btn {
+  align-self: flex-start;
+}
+
+/* ヒーロー内のラベル（白地の上に置く） */
+.stamp-hero .coupon-category {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+}
+
+.stamp-hero .coupon-badge.is-stamp {
+  background: var(--white);
+  color: #AD1457;
+}
+
+.coupon-category.is-season {
+  background: #FFF3E0;
+  color: #8A3A00;
+}
+
+/* コースの一覧 */
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 14px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.course-card.is-joined {
+  border-color: #C2185B;
+  background: #FFF5F8;
+}
+
+.course-card .stamp-progress {
+  background: var(--gray-200);
+  height: 6px;
+  margin: 2px 0;
+}
+
+.course-card .stamp-progress-bar {
+  background: #C2185B;
+}
+
+.course-card .stamp-tick {
+  display: none;
+}
+
+.course-card-title {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.course-card-catch {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
+}
+
+.course-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.course-card-count {
+  flex-shrink: 0;
+  color: #C2185B;
+}
+
+/* 参加ボタン */
+.course-join-btn {
+  margin-top: 8px;
+  padding: 13px 0;
+  background: var(--white);
+  color: #AD1457;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.course-join-btn:active {
+  transform: scale(0.98);
+}
+
+.course-join-note,
+.course-joined {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.course-joined {
+  margin-top: 6px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+/* 行程 */
+.course-plan {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.course-plan-step {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 0 0 14px 18px;
+}
+
+/* 左の線と点 */
+.course-plan-step::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #C2185B;
+}
+
+.course-plan-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 16px;
+  bottom: 0;
+  width: 1.5px;
+  background: #F8BBD0;
+}
+
+.course-plan-time {
+  flex-shrink: 0;
+  width: 44px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #C2185B;
+}
+
+.course-plan-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* このコースの回遊クーポン（セクションの中なので外側の余白はなし） */
+.course-coupons {
+  margin: 0;
+}
+
+.course-idea {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+
+/* 加盟店の詳細・支払い完了に出すコースの一覧 */
+.course-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.course-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--white);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.course-mini-name {
+  font-weight: 700;
+}
+
+.course-mini-count {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #C2185B;
+}
+
+.course-mini.is-joined {
+  outline: 1.5px solid #C2185B;
+}
+
+/* ホーム・クーポン一覧のバナー（参加中のコース） */
+.tour-course-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tour-course-count {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+/* コースの中のクーポンは幅がせまいので、ボタンを消して状態は下の文字で見せる */
+.course-coupons .coupon-btn {
+  display: none;
+}

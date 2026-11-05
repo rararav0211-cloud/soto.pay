@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>スタンプラリー｜桑都ペイ</title>
+  <title>回遊コース｜桑都ペイ</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
         <polyline points="15 18 9 12 15 6"/>
       </svg>
     </a>
-    <h1 class="page-title">スタンプラリー</h1>
+    <h1 class="page-title">回遊コース</h1>
     <button class="notification-btn" aria-label="お知らせ">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -25,26 +25,9 @@
     </button>
   </header>
 
-  <!-- 中身はすべて js/page-stamp.js で自動生成 -->
-  <main class="stamp-page">
-    <section class="stamp-hero"></section>
-
-    <section class="stamp-section">
-      <h2 class="stamp-section-title">スタンプカード</h2>
-      <div class="stamp-card"></div>
-    </section>
-
-    <section class="stamp-section">
-      <h2 class="stamp-section-title">特典</h2>
-      <div class="stamp-rewards"></div>
-    </section>
-
-    <section class="stamp-section">
-      <h2 class="stamp-section-title">対象のお店</h2>
-      <p class="stamp-section-note">お店を押すと詳細が開きます。お店で桑都ペイを使うとスタンプが押されます。</p>
-      <div class="stamp-spots"></div>
-    </section>
-  </main>
+  <!-- 中身はすべて js/page-stamp.js で自動生成
+       stamp.html … コースの一覧 / stamp.html?course=コースの id … コースの詳細 -->
+  <main class="stamp-page"></main>
 
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item">

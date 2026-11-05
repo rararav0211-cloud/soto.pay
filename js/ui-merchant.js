@@ -1,7 +1,7 @@
 // ════════════════════════════════════════
-//  ui-merchant.js … 加盟店まわり（加盟店一覧・スタンプラリーで使う）
+//  ui-merchant.js … 加盟店まわり（加盟店一覧・回遊コースで使う）
 //  ・COUPONS と SHOPS をまとめて「加盟店」の一覧にする
-//  ・スタンプラリーの対象のお店とスタンプの数
+//  ・回遊コースのお店とスタンプの数
 //  ・加盟店の詳細パネル（ここから支払い・予約へ進める）
 // ════════════════════════════════════════
 'use strict';
@@ -71,39 +71,53 @@ function buildMerchants() {
 }
 
 // ════════════════════════════
-//  スタンプラリー
+//  回遊コース
 // ════════════════════════════
-// 対象のお店を、STAMP_RALLY.spots に書いた順で取り出す
-function getStampSpots() {
+// コースのお店（加盟店）を、spots に書いた順で取り出す
+function getCourseSpots(course) {
   const merchants = buildMerchants();
-  return STAMP_RALLY.spots
+  return course.spots
     .map((spot) => merchants.find((m) => isSameSpot(spot, m)))
     .filter(Boolean); // 見つからないもの（書き間違いなど）は外す
 }
 
-function getStampCount() {
-  return getStampSpots().filter(hasStamp).length;
+// コースでたまったスタンプの数
+function getCourseCount(course) {
+  return getCourseSpots(course).filter(hasStamp).length;
 }
 
-// 加盟店の詳細パネルに出す「スタンプラリー」の枠
-function createStampBox(m) {
+// 参加中のコース
+function getJoinedCourses() {
+  return TOUR_COURSES.filter(isJoined);
+}
+
+// コースのページへのリンク先
+function getCourseUrl(course) {
+  return `stamp.html?course=${course.id}`;
+}
+
+// 加盟店の詳細・支払い完了に出す「回遊コース」の枠
+function createCourseBox(m) {
   const box = el('div', 'stamp-box');
   const head = el('div', 'tour-box-head');
-  head.append(el('span', 'coupon-badge is-stamp', 'スタンプ'), el('p', 'tour-box-title', `${STAMP_RALLY.title}の対象店`));
+  head.append(el('span', 'coupon-badge is-stamp', 'スタンプ'), el('p', 'tour-box-title', '回遊コースのお店です'));
   box.append(head);
 
-  if (hasStamp(m)) {
-    box.append(el('p', 'tour-box-text', `スタンプ獲得済み（${formatDateTime(stampData.stamps[m.key])}）`));
-  } else {
-    box.append(el('p', 'tour-box-text', 'このお店で桑都ペイを使うと、スタンプが1つ押されます。'));
-    if (m.area === 'takao') {
-      box.append(el('p', 'tour-box-text', `${TOUR_ORIGIN}エリアでの支払いなので、回遊クーポンも届きます。`));
-    }
-  }
+  box.append(el('p', 'tour-box-text', hasStamp(m)
+    ? `スタンプ獲得済み（${formatDateTime(stampData.stamps[m.key])}）`
+    : 'このお店で桑都ペイを使うと、スタンプが1つ押されます。'));
 
-  const link = el('a', 'tour-box-link', `スタンプカードを見る（${getStampCount()} / ${getStampSpots().length}）`);
-  link.href = 'stamp.html';
-  box.append(link);
+  // このお店が入っているコースと、それぞれの進み具合
+  const list = el('div', 'course-mini-list');
+  getCoursesFor(m).forEach((course) => {
+    const link = el('a', isJoined(course) ? 'course-mini is-joined' : 'course-mini');
+    link.href = getCourseUrl(course);
+    const name = el('span', 'course-mini-name', course.title);
+    const count = el('span', 'course-mini-count', `${isJoined(course) ? '参加中・' : ''}${getCourseCount(course)} / ${course.spots.length}`);
+    link.append(name, count);
+    list.append(link);
+  });
+  box.append(list);
   return box;
 }
 
@@ -129,9 +143,7 @@ function createMerchantCouponBox(coupon) {
   box.append(head, amount);
 
   if (status === 'locked') {
-    box.append(el('p', 'tour-box-text', `${TOUR_ORIGIN}で桑都ペイを使うと解放されます。`));
-  } else if (status === 'expired') {
-    box.append(el('p', 'tour-box-text', '回遊クーポンの期限が切れました。'));
+    box.append(el('p', 'tour-box-text', 'このお店が入っている回遊コースに参加すると届きます。'));
   } else if (status === 'acquired') {
     box.append(el('p', 'tour-box-text', 'このお店で桑都ペイを使うと、自動で割引されます。'));
   }
@@ -170,14 +182,11 @@ function fillMerchant(m) {
 
   sheet.append(...sheetTop(), labels, title, desc, info);
 
-  // 高尾山エリアのお店は回遊の起点であることを伝える
-  if (m.area === 'takao') sheet.append(createOriginBox());
-
   // クーポンがあるお店
   if (m.coupon) sheet.append(createMerchantCouponBox(m.coupon));
 
-  // スタンプラリーの対象のお店
-  if (isStampSpot(m)) sheet.append(createStampBox(m));
+  // 回遊コースのお店
+  if (isStampSpot(m)) sheet.append(createCourseBox(m));
 
   // このお店で支払う（支払い画面へ）
   const payBtn = el('button', 'sheet-btn', 'このお店で支払う');

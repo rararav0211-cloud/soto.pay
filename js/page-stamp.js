@@ -1,45 +1,139 @@
 // ════════════════════════════════════════
-//  page-stamp.js … スタンプラリー（stamp.html）だけで使う処理
-//  ・上のカード（進み具合）
-//  ・スタンプカード
-//  ・特典
-//  ・対象のお店（エリアごと）
+//  page-stamp.js … 回遊コース（stamp.html）だけで使う処理
+//  stamp.html               … コースの一覧
+//  stamp.html?course=コースの id … コースの詳細
+//   ・上のカード（進み具合・参加ボタン）
+//   ・行程（プランのとおり。スタンプのない立ち寄り先も出す）
+//   ・スタンプカード
+//   ・特典（半分・全部）
+//   ・このコースの回遊クーポン
+//   ・プランを考えた人の工夫
 // ════════════════════════════════════════
 'use strict';
 {
   const page = document.querySelector('.stamp-page');
-  const hero = page.querySelector('.stamp-hero');
-  const card = page.querySelector('.stamp-card');
-  const rewardList = page.querySelector('.stamp-rewards');
-  const spotList = page.querySelector('.stamp-spots');
+  const courseId = new URLSearchParams(location.search).get('course');
+  const course = TOUR_COURSES.find((c) => c.id === courseId) || null;
 
-  // ── 上のカード：タイトル・進み具合 ──
-  function renderHero(count, total) {
-    hero.replaceChildren();
+  // ページの上のタイトル
+  if (course) {
+    document.title = `${course.title}｜桑都ペイ`;
+    // 戻るボタンはコースの一覧へ
+    const back = document.querySelector('.back-btn');
+    back.href = 'stamp.html';
+    back.setAttribute('aria-label', 'コースの一覧に戻る');
+  }
+
+  // セクション（見出しつきの白い箱）
+  function createSection(title, note) {
+    const section = el('section', 'stamp-section');
+    section.append(el('h2', 'stamp-section-title', title));
+    if (note) section.append(el('p', 'stamp-section-note', note));
+    return section;
+  }
+
+  // 進み具合のバー（特典がもらえる位置に目印）
+  function createProgress(c, count) {
+    const total = c.spots.length;
     const progress = el('div', 'stamp-progress');
     const bar = el('div', 'stamp-progress-bar');
     bar.style.width = `${total ? (count / total) * 100 : 0}%`;
     progress.append(bar);
-    // 特典がもらえる位置に目印をつける
-    STAMP_RALLY.rewards.forEach((reward) => {
+    getCourseRewards(c).forEach((reward) => {
       const tick = el('span', count >= reward.count ? 'stamp-tick is-reached' : 'stamp-tick');
       tick.style.left = `${(reward.count / total) * 100}%`;
       progress.append(tick);
     });
-    const countText = el('p', 'stamp-count');
-    countText.append(el('strong', '', count), ` / ${total} 個`);
-    hero.append(
-      el('p', 'stamp-hero-title', STAMP_RALLY.title),
-      el('p', 'stamp-hero-text', STAMP_RALLY.description),
-      countText,
-      progress,
-      el('p', 'stamp-hero-period', `期間：${STAMP_RALLY.period}`)
-    );
+    return progress;
   }
 
-  // ── スタンプカード（丸いマスが並ぶ） ──
-  function renderCard(spots) {
-    card.replaceChildren();
+  // コースのラベル（参加中・向いている人・時期）
+  function createCourseLabels(c) {
+    const labels = el('div', 'coupon-labels');
+    if (isJoined(c)) labels.append(el('span', 'coupon-badge is-stamp', '参加中'));
+    labels.append(el('span', 'coupon-category', c.target));
+    if (c.season) labels.append(el('span', 'coupon-category is-season', c.season));
+    return labels;
+  }
+
+  // ════════════════════════════
+  //  コースの一覧
+  // ════════════════════════════
+  function renderList() {
+    page.replaceChildren();
+
+    const hero = el('section', 'stamp-hero');
+    hero.append(
+      el('p', 'stamp-hero-title', TOUR_RALLY.title),
+      el('p', 'stamp-hero-text', TOUR_RALLY.description),
+      el('p', 'stamp-hero-period', `期間：${TOUR_RALLY.period}`)
+    );
+
+    const section = createSection('コースを選ぶ',
+      `半分回ると${TOUR_REWARDS.half.toLocaleString()}円分、全部回ると${TOUR_REWARDS.complete.toLocaleString()}円分の特典。いくつでも参加できます。`);
+    const list = el('div', 'course-list');
+    TOUR_COURSES.forEach((c) => {
+      const count = getCourseCount(c);
+      const card = el('a', isJoined(c) ? 'course-card is-joined' : 'course-card');
+      card.href = getCourseUrl(c);
+
+      const foot = el('div', 'course-card-foot');
+      foot.append(el('span', 'course-card-budget', `予算 ${c.budget}`),
+        el('span', 'course-card-count', `スタンプ ${count} / ${c.spots.length}`));
+
+      card.append(createCourseLabels(c), el('p', 'course-card-title', c.title), el('p', 'course-card-catch', c.catch));
+      if (isJoined(c)) card.append(createProgress(c, count));
+      card.append(foot);
+      list.append(card);
+    });
+    section.append(list);
+
+    page.append(hero, section);
+  }
+
+  // ════════════════════════════
+  //  コースの詳細
+  // ════════════════════════════
+  function renderCourse(c) {
+    page.replaceChildren();
+    const spots = getCourseSpots(c);
+    const count = spots.filter(hasStamp).length;
+
+    // ── 上のカード ──
+    const hero = el('section', 'stamp-hero');
+    const countText = el('p', 'stamp-count');
+    countText.append(el('strong', '', count), ` / ${spots.length} 個`);
+    hero.append(
+      createCourseLabels(c),
+      el('p', 'stamp-hero-title', c.title),
+      el('p', 'stamp-hero-text', c.catch),
+      countText,
+      createProgress(c, count),
+      el('p', 'stamp-hero-period', `予算の目安（1人）：${c.budget}　／　期間：${TOUR_RALLY.period}`)
+    );
+
+    const coupons = getCourseCoupons(c);
+    if (isJoined(c)) {
+      hero.append(el('p', 'course-joined', `✓ 参加中。コースのお店で使える回遊クーポンが${coupons.length}枚届いています。`));
+    } else {
+      const join = el('button', 'course-join-btn', 'このコースに参加する');
+      join.addEventListener('click', () => joinCourse(c));
+      hero.append(join, el('p', 'course-join-note', `参加すると、コースのお店で使える回遊クーポンが${coupons.length}枚届きます。`));
+    }
+
+    // ── 行程 ──
+    const planSection = createSection('行程', '回る順番は自由です。スタンプはコースのお店で桑都ペイを使うと押されます。');
+    const plan = el('ol', 'course-plan');
+    c.plan.forEach((step) => {
+      const item = el('li', 'course-plan-step');
+      item.append(el('span', 'course-plan-time', step.time), el('p', 'course-plan-text', step.text));
+      plan.append(item);
+    });
+    planSection.append(plan);
+
+    // ── スタンプカード ──
+    const cardSection = createSection('スタンプカード', 'お店を押すと詳細が開きます。ここから支払いもできます。');
+    const card = el('div', 'stamp-card');
     spots.forEach((m, i) => {
       const done = hasStamp(m);
       const cell = el('button', done ? 'stamp-cell is-done' : 'stamp-cell');
@@ -48,62 +142,51 @@
       cell.addEventListener('click', () => openMerchant(m));
       card.append(cell);
     });
-  }
+    cardSection.append(card);
 
-  // ── 特典 ──
-  function renderRewards(count) {
-    rewardList.replaceChildren();
-    STAMP_RALLY.rewards.forEach((reward) => {
+    // ── 特典 ──
+    const rewardSection = createSection('特典', isJoined(c) ? '' : '特典はコースに参加すると受け取れます。');
+    const rewardList = el('div', 'stamp-rewards');
+    getCourseRewards(c).forEach((reward) => {
       const row = el('div', 'stamp-reward');
       const left = el('div', 'stamp-reward-info');
       left.append(el('p', 'stamp-reward-count', `${reward.count}個`), el('p', 'stamp-reward-label', reward.label));
 
       let btn;
-      if (stampData.claimed.includes(reward.count)) {
+      if (isRewardClaimed(c, reward)) {
         btn = el('button', 'stamp-reward-btn is-claimed', '受け取り済み');
         btn.disabled = true;
-      } else if (count >= reward.count) {
-        btn = el('button', 'stamp-reward-btn', '受け取る');
-        btn.addEventListener('click', () => claimReward(reward));
-      } else {
+      } else if (count < reward.count) {
         btn = el('button', 'stamp-reward-btn is-locked', `あと${reward.count - count}個`);
         btn.disabled = true;
+      } else if (!isJoined(c)) {
+        btn = el('button', 'stamp-reward-btn is-locked', '参加すると受け取れる');
+        btn.disabled = true;
+      } else {
+        btn = el('button', 'stamp-reward-btn', '受け取る');
+        btn.addEventListener('click', () => claimReward(c, reward));
       }
       row.append(left, btn);
       rewardList.append(row);
     });
+    rewardSection.append(rewardList);
+
+    // ── このコースの回遊クーポン ──
+    const couponSection = createSection('このコースの回遊クーポン');
+    const couponList = el('div', 'coupon-list course-coupons');
+    coupons.forEach((coupon) => couponList.append(createCouponCard(coupon, true)));
+    couponSection.append(couponList);
+
+    page.append(hero, planSection, cardSection, rewardSection, couponSection);
+
+    // ── プランを考えた人の工夫 ──
+    if (c.idea) {
+      const ideaSection = createSection('地域通貨を使った工夫のアイデア');
+      ideaSection.append(el('p', 'course-idea', c.idea));
+      page.append(ideaSection);
+    }
   }
 
-  // ── 対象のお店（エリアごと） ──
-  function renderSpots(spots) {
-    spotList.replaceChildren();
-    Object.entries(AREAS).forEach(([areaId, areaLabel]) => {
-      const inArea = spots.filter((m) => m.area === areaId);
-      if (inArea.length === 0) return;
-      const got = inArea.filter(hasStamp).length;
-      const head = el('h2', 'group-head');
-      head.append(el('span', '', areaLabel), el('span', 'group-count', `${got} / ${inArea.length}`));
-      spotList.append(head);
-      inArea.forEach((m) => {
-        const row = el('button', hasStamp(m) ? 'stamp-spot is-done' : 'stamp-spot');
-        const info = el('div', 'stamp-spot-info');
-        info.append(el('p', 'stamp-spot-name', m.name), el('p', 'stamp-spot-genre', m.genre));
-        row.append(createIcon(m.icon), info, el('span', 'stamp-spot-status', hasStamp(m) ? '✓ 獲得' : '未獲得'));
-        row.addEventListener('click', () => openMerchant(m));
-        spotList.append(row);
-      });
-    });
-  }
-
-  function renderStampPage() {
-    const spots = getStampSpots();
-    const count = spots.filter(hasStamp).length;
-    renderHero(count, spots.length);
-    renderCard(spots);
-    renderRewards(count);
-    renderSpots(spots);
-  }
-
-  onRender(renderStampPage);
+  onRender(() => (course ? renderCourse(course) : renderList()));
   startApp();
 }

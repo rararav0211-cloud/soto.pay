@@ -2,8 +2,7 @@
 //  ui-coupon.js … クーポンまわりの画面部品（複数のページで使う）
 //  ・クーポンカード（ホーム・クーポン一覧）
 //  ・クーポン詳細のパネル
-//  ・回遊クーポンの案内バナーと残り時間
-//  ・「ここは回遊クーポンの起点です」の枠
+//  ・回遊コースの案内バナー（ホーム・クーポン一覧）
 // ════════════════════════════════════════
 'use strict';
 
@@ -11,8 +10,7 @@ const BUTTON_TEXT = {
   available: '獲得する',
   acquired: '獲得済み',
   used: '使用済み',
-  locked: '未解放',
-  expired: '期限切れ',
+  locked: 'コース参加で届く',
 };
 
 // 利用条件の文章（minSpend が 0 や未設定なら「条件なし」）
@@ -22,13 +20,18 @@ function getConditionText(coupon) {
     : '利用条件なし';
 }
 
-// 有効期限の文章
+// 有効期限の文章（回遊クーポンは回遊コースの期間中）
 function getExpiryText(coupon, status) {
-  if (coupon.kind !== 'tour') return 'なし';
-  if (status === 'locked') return `${TOUR_ORIGIN}で支払った日の23:59まで`;
-  if (status === 'expired') return '期限切れ';
   if (status === 'used') return '使用済み';
-  return `本日${formatTime(tour.expiresAt)}まで`;
+  if (coupon.kind !== 'tour') return 'なし';
+  return TOUR_RALLY.period;
+}
+
+// 回遊クーポンが入っているコースの名前（「〇〇コースほか2コース」）
+function getCourseNamesText(coupon) {
+  const courses = getCoursesForCoupon(coupon);
+  if (courses.length === 0) return '';
+  return courses.length === 1 ? courses[0].title : `${courses[0].title}ほか${courses.length - 1}コース`;
 }
 
 // 「300円引き」の大きい数字つき表示
@@ -49,7 +52,7 @@ function createCouponCard(coupon, isRow) {
   card.dataset.category = coupon.category;
   card.dataset.status = status;
   if (coupon.kind === 'tour') card.classList.add('is-tour');
-  if (status === 'locked' || status === 'expired' || status === 'used') card.classList.add('is-inactive');
+  if (status === 'locked' || status === 'used') card.classList.add('is-inactive');
 
   const name = el('p', 'coupon-name', coupon.name);
   const discount = createDiscount('coupon-discount', coupon);
@@ -72,13 +75,11 @@ function createCouponCard(coupon, isRow) {
   if (coupon.kind === 'tour') {
     badge = el('span', 'coupon-badge', '回遊');
     if (status === 'locked') {
-      note = el('p', 'coupon-note', `${TOUR_ORIGIN}で支払うと解放`);
-    } else if (status === 'expired') {
-      note = el('p', 'coupon-note', '有効期限が切れました');
+      note = el('p', 'coupon-note', '回遊コースに参加すると届く');
     } else if (status === 'used') {
       note = el('p', 'coupon-note', '使用済みです');
     } else {
-      note = el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`);
+      note = el('p', 'coupon-note is-active', '回遊コース参加中');
     }
   }
 
@@ -130,41 +131,42 @@ function fillDetail(coupon) {
   // 条件などの一覧
   const info = el('dl', 'sheet-info');
   const expiry = el('dd', '', getExpiryText(coupon, status));
-  // 回遊クーポン配信中なら残り時間も出す
-  if (coupon.kind === 'tour' && isTourActive()) {
-    expiry.append('（残り ', el('span', 'tour-countdown', formatRemaining(tour.expiresAt - Date.now())), '）');
-  }
   info.append(
     el('dt', '', '割引'), el('dd', '', `${coupon.discount.toLocaleString()}円引き`),
     el('dt', '', '利用条件'), el('dd', '', getConditionText(coupon)),
     el('dt', '', '有効期限'), expiry,
     el('dt', '', '対象エリア'), el('dd', '', AREAS[detail.area] || '—')
   );
+  if (coupon.kind === 'tour') info.append(el('dt', '', '回遊コース'), el('dd', '', getCourseNamesText(coupon)));
 
   // 使い方
   const howto = el('div', 'sheet-howto');
   howto.append(el('p', 'sheet-howto-title', '使い方'));
   const steps = el('ol', '');
-  if (coupon.kind === 'tour') {
-    steps.append(el('li', '', `${TOUR_ORIGIN}で桑都ペイを使うとクーポンが解放されます`));
-  }
+  steps.append(coupon.kind === 'tour'
+    ? el('li', '', 'このお店が入っている回遊コースに参加すると、クーポンが届きます')
+    : el('li', '', '「獲得する」を押してクーポンを受け取ります'));
   steps.append(
-    el('li', '', '「獲得する」を押してクーポンを受け取ります'),
     el('li', '', 'お店で桑都ペイで支払うと、自動で割引されます'),
     el('li', '', 'または「このクーポンを使う」を押して、スタッフに画面を見せます')
   );
   howto.append(steps);
 
-  // 獲得ボタン（獲得済みなら「このクーポンを使う」）
-  const btn = el('button', 'sheet-btn', status === 'locked'
-    ? `${TOUR_ORIGIN}で支払うと解放`
-    : status === 'acquired' ? 'このクーポンを使う' : BUTTON_TEXT[status]);
-  if (status === 'available') {
-    btn.addEventListener('click', () => acquireCoupon(coupon));
-  } else if (status === 'acquired') {
-    btn.addEventListener('click', () => openCouponUse(coupon));
+  // 獲得ボタン（獲得済みなら「このクーポンを使う」、回遊コース未参加ならコースへ）
+  let btn;
+  if (status === 'locked') {
+    btn = el('a', 'sheet-btn', '回遊コースを見て参加する');
+    const courses = getCoursesForCoupon(coupon);
+    btn.href = courses.length === 1 ? getCourseUrl(courses[0]) : 'stamp.html';
   } else {
-    btn.disabled = true;
+    btn = el('button', 'sheet-btn', status === 'acquired' ? 'このクーポンを使う' : BUTTON_TEXT[status]);
+    if (status === 'available') {
+      btn.addEventListener('click', () => acquireCoupon(coupon));
+    } else if (status === 'acquired') {
+      btn.addEventListener('click', () => openCouponUse(coupon));
+    } else {
+      btn.disabled = true;
+    }
   }
 
   sheet.append(...sheetTop(), labels, title, discount, desc, info, howto, btn);
@@ -277,9 +279,6 @@ function openCouponUse(coupon) {
       createDiscount('use-ticket-discount', coupon),
       el('p', 'use-ticket-condition', getConditionText(coupon))
     );
-    if (coupon.kind === 'tour' && isTourActive()) {
-      ticket.append(el('p', 'coupon-note is-active', `本日${formatTime(tour.expiresAt)}まで`));
-    }
     return ticket;
   }
 
@@ -323,62 +322,35 @@ function openCouponUse(coupon) {
 }
 
 // ════════════════════════════
-//  「ここは回遊クーポンの起点です」の枠（高尾山エリアのお店で使う）
-// ════════════════════════════
-function createOriginBox() {
-  const box = el('div', 'tour-box is-origin');
-  box.append(
-    el('p', 'tour-box-title', 'ここは回遊クーポンの起点です'),
-    el('p', 'tour-box-text', `このお店で桑都ペイを使うと、${TOUR_DESTINATION}で使える回遊クーポンがその日限りで届きます。`)
-  );
-  return box;
-}
-
-// ════════════════════════════
-//  回遊クーポンの案内バナー（ホーム・クーポン一覧の .tour-banner）
+//  回遊コースの案内バナー（ホーム・クーポン一覧の .tour-banner）
+//  参加中のコースがあれば進み具合、なければコースへの参加をうながす
 // ════════════════════════════
 function renderBanners() {
   document.querySelectorAll('.tour-banner').forEach((banner) => {
     banner.replaceChildren();
-    banner.classList.toggle('is-active', isTourActive());
+    const joined = getJoinedCourses();
+    banner.classList.toggle('is-active', joined.length > 0);
 
-    if (isTourActive()) {
-      // 配信中：残り時間を出す
-      banner.append(
-        el('p', 'tour-title', `${TOUR_DESTINATION}の回遊クーポン配信中`),
-        el('p', 'tour-text', `${TOUR_ORIGIN}でのご利用ありがとうございます。本日${formatTime(tour.expiresAt)}まで使えます。`)
-      );
-      const remain = el('p', 'tour-remaining');
-      remain.append('残り ', el('strong', 'tour-countdown', formatRemaining(tour.expiresAt - Date.now())));
-      banner.append(remain);
+    if (joined.length > 0) {
+      banner.append(el('p', 'tour-title', '回遊コースに参加中'));
+      joined.forEach((course) => {
+        const link = el('a', 'tour-course-row');
+        link.href = getCourseUrl(course);
+        link.append(el('span', 'tour-course-name', course.title),
+          el('strong', 'tour-course-count', `${getCourseCount(course)} / ${course.spots.length}`));
+        banner.append(link);
+      });
       return;
     }
 
-    // 未解放 or 期限切れ：高尾山での利用をうながす
     banner.append(
-      el('p', 'tour-title', `${TOUR_ORIGIN}で使うと、${TOUR_DESTINATION}のクーポンが届く`),
-      el('p', 'tour-text', isTourExpired()
-        ? '前回の回遊クーポンは期限が切れました。もう一度高尾山で使うと再配信されます。'
-        : `${TOUR_ORIGIN}で桑都ペイを使うと、その日限りの「回遊」クーポンが解放されます。`)
+      el('p', 'tour-title', '回遊コースに参加すると、クーポンがまとめて届く'),
+      el('p', 'tour-text', `高尾山から八王子まで、${TOUR_COURSES.length}つのコースから選べます。どこから回ってもOK。お店で使うとスタンプがたまります。`)
     );
-    // 高尾山エリアのお店だけを出した支払い画面を開く
-    const demoBtn = el('button', 'tour-demo-btn', `${TOUR_ORIGIN}で支払う`);
-    demoBtn.addEventListener('click', () => openPay({ area: 'takao' }));
-    banner.append(demoBtn);
-  });
-}
-
-// 残り時間だけを書きかえる（1分ごと）
-function updateCountdown() {
-  if (isTourExpired() && document.querySelector('.tour-banner.is-active')) {
-    render(); // ちょうど期限が切れたら全体を描き直す
-    return;
-  }
-  if (!isTourActive()) return;
-  document.querySelectorAll('.tour-countdown').forEach((node) => {
-    node.textContent = formatRemaining(tour.expiresAt - Date.now());
+    const link = el('a', 'tour-demo-btn', 'コースを選ぶ');
+    link.href = 'stamp.html';
+    banner.append(link);
   });
 }
 
 onRender(renderBanners);
-onEveryMinute(updateCountdown);

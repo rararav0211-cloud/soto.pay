@@ -36,13 +36,12 @@
     const head = el('div', 'shop-head');
     const titleBox = el('div', 'shop-title-box');
     const labels = el('div', 'coupon-labels');
-    if (m.area === 'takao') labels.append(el('span', 'coupon-badge is-origin', '回遊の起点'));
     if (m.coupon) {
       labels.append(el('span', m.coupon.kind === 'tour' ? 'coupon-badge' : 'coupon-badge is-coupon',
         `${m.coupon.discount.toLocaleString()}円引き`));
     }
     if (m.shop) labels.append(el('span', 'coupon-badge is-reserve', '予約可'));
-    if (isStampSpot(m)) labels.append(el('span', 'coupon-badge is-stamp', 'スタンプ'));
+    if (isStampSpot(m)) labels.append(el('span', 'coupon-badge is-stamp', '回遊コース'));
     labels.append(el('span', 'coupon-category', m.genre), el('span', 'coupon-category', AREAS[m.area]));
     titleBox.append(el('p', 'shop-name', m.name), labels);
     // 現在地からの距離（「近い順」のときだけ文字が入る）
@@ -213,10 +212,9 @@
   let userMarker = null;
   const markers = []; // merchants と同じ順番。位置がないお店は null
 
-  // ピンの色：高尾山エリア＝緑、回遊クーポン＝オレンジ、それ以外＝グレー
+  // ピンの色：回遊コースのお店＝オレンジ、それ以外＝グレー
   function getPinClass(m) {
-    if (m.area === 'takao') return 'map-pin is-origin';
-    if (m.coupon && m.coupon.kind === 'tour') return 'map-pin is-tour';
+    if (isStampSpot(m)) return 'map-pin is-tour';
     return 'map-pin';
   }
 
