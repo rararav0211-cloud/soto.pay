@@ -4,7 +4,7 @@
 //  ・これからの予約とキャンセル（カードとキャンセルの画面は ui-reservation.js）
 //  ・予約履歴の画面への入口
 //  ・公共料金（引き落としのページへの入口）
-//  ・履歴・特典（取引履歴・ポイント履歴・お知らせ・クーポン・回遊クーポン）
+//  ・履歴・特典（取引履歴・ポイント（points.html）・お知らせ・クーポン・回遊クーポン）
 //  ・デモをはじめからにする（発表・テスト用）
 // ════════════════════════════════════════
 'use strict';
@@ -32,8 +32,14 @@
     const nums = el('div', 'account-nums');
     const money = el('div', 'account-num');
     money.append(el('span', 'account-num-label', '使用可能金額'), el('strong', '', `${wallet.balance.toLocaleString()}円`));
-    const points = el('div', 'account-num');
-    points.append(el('span', 'account-num-label', POINT_NAME), el('strong', '', `${pointData.balance.toLocaleString()}pt`));
+    // 保有ポイント：押すとポイントの詳細（points.html）へ
+    const points = el('a', 'account-num account-num-link');
+    points.href = 'points.html?from=account';
+    points.setAttribute('aria-label', `保有ポイント ${pointData.balance.toLocaleString()}pt。押すとポイントの詳細を見る`);
+    const pointsHead = el('span', 'account-num-label account-num-head');
+    pointsHead.append('保有ポイント', el('span', 'account-num-arrow', '›'));
+    points.append(pointsHead, el('strong', '', `${pointData.balance.toLocaleString()}pt`),
+      el('span', 'account-num-sub', `うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt`));
     nums.append(money, points);
 
     const actions = el('div', 'card-actions');
@@ -81,32 +87,10 @@
     return row;
   }
 
-  // ポイント履歴
-  function openPointHistory() {
-    function fill() {
-      resetSheet('ポイント履歴');
-      const total = el('p', 'point-box-amount account-point-total');
-      total.append(`${POINT_NAME} `, el('strong', '', `${pointData.balance.toLocaleString()}pt`));
-      const list = el('div', 'notice-list');
-      if (pointData.history.length === 0) list.append(el('p', 'notice-empty', 'ポイントの履歴はまだありません'));
-      [...pointData.history].reverse().forEach((h) => {
-        const row = el('div', 'account-point-row');
-        const text = el('div', '');
-        text.append(el('p', 'notice-title', h.label), el('p', 'notice-time', formatDateTime(h.at)));
-        row.append(text, el('span', h.amount < 0 ? 'account-point-amount is-minus' : 'account-point-amount',
-          `${h.amount > 0 ? '+' : ''}${h.amount.toLocaleString()}pt`));
-        list.append(row);
-      });
-      const rule = el('p', 'sheet-desc', '宿泊・体験の予約でもらえて、宿泊・体験のお店での支払いにだけ使えるポイントです（1pt＝1円）。');
-      sheet.append(...sheetTop(), el('h2', 'sheet-title', 'ポイント履歴'), rule, total, list);
-    }
-    openSheet(fill, false);
-  }
-
   function renderMenu() {
     menu.replaceChildren(
       createMenuRow('取引履歴', '支払い・公共料金・チャージ・特典', () => openNotices('取引履歴', MONEY_NOTICE_TYPES)),
-      createMenuRow('ポイント履歴', `${POINT_NAME} ${pointData.balance.toLocaleString()}pt`, openPointHistory),
+      createMenuRow('ポイント', `保有 ${pointData.balance.toLocaleString()}pt（うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt）`, 'points.html?from=account'),
       createMenuRow('お知らせ', `未読 ${notices.filter((n) => !n.read).length}件`, () => openNotices()),
       createMenuRow('クーポン', `使えるクーポン ${getUsableCoupons().length}枚`, 'coupons.html'),
       createMenuRow('回遊クーポン', getUnlockedToday().length > 0 ? `今日解放 ${getUnlockedToday().length}枚` : '高尾山で使うとクーポンが開く', 'stamp.html')

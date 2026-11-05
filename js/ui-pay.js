@@ -150,7 +150,7 @@ function openPay(options = {}) {
     const pointToggle = el('label', 'near-toggle pay-point-toggle');
     const pointText = el('div', 'pay-point-text');
     const pointSub = el('span', 'pay-point-sub');
-    pointText.append(el('span', 'near-toggle-text', `${POINT_NAME}を使う`), pointSub);
+    pointText.append(el('span', 'near-toggle-text', 'ポイントを使う'), pointSub);
     const pointCheck = el('input');
     pointCheck.type = 'checkbox';
     pointCheck.setAttribute('role', 'switch');
@@ -200,21 +200,25 @@ function openPay(options = {}) {
     // 使いたいポイント（「全部使う」のときは持っている分すべて）
     function getWantedPoints() {
       if (!usePoints) return 0;
-      return pointsAll ? pointData.balance : Number(pointsText || 0);
+      return pointsAll ? getUsablePointsAt(m) : Number(pointsText || 0);
     }
 
     // ポイントの箱の表示を、いまの計算結果に合わせる
     function updatePointBox(preview, amount) {
-      // 宿泊・体験のお店でだけ使える
-      const usableHere = canUsePointsAt(m);
-      const has = pointData.balance > 0 && usableHere;
+      // 宿泊・体験のお店なら全部、それ以外は普通のポイントだけ使える
+      const usable = getUsablePointsAt(m);
+      const has = usable > 0;
       pointCheck.disabled = !has;
       pointCheck.checked = usePoints && has;
-      if (!usableHere) {
-        pointSub.textContent = `宿泊・体験のお店でだけ使えます（保有 ${pointData.balance.toLocaleString()}pt）`;
-      } else {
+      if (canUsePointsAt(m)) {
         pointSub.textContent = has
-          ? `保有 ${pointData.balance.toLocaleString()}pt（1pt＝1円）`
+          ? `使える ${usable.toLocaleString()}pt（うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt）・1pt＝1円`
+          : '使えるポイントがありません';
+      } else if (has) {
+        pointSub.textContent = `${NORMAL_POINT_NAME} ${usable.toLocaleString()}ptが使えます（${POINT_NAME}は宿泊・体験のお店だけ）`;
+      } else {
+        pointSub.textContent = pointData.limited > 0
+          ? `${POINT_NAME}（${pointData.limited.toLocaleString()}pt）は宿泊・体験のお店でだけ使えます`
           : '使えるポイントがありません';
       }
 

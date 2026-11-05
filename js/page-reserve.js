@@ -277,7 +277,7 @@
       const amount = el('p', 'point-box-amount');
       amount.append(el('strong', '', `+${reservation.points.toLocaleString()}pt`), ' 獲得しました');
       const total = el('p', 'point-box-text');
-      total.append(`${POINT_NAME}：`, el('span', 'points-value', pointData.balance.toLocaleString()), 'pt（宿泊・体験のお店で使えます）');
+      total.append('保有ポイント：', el('span', 'points-value', pointData.balance.toLocaleString()), `pt（うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt）`);
       pointDone.append(amount, total);
       sheet.append(pointDone);
     }
