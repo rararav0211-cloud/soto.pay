@@ -2,7 +2,6 @@
 //  page-points.js … ポイント（points.html）だけで使う処理
 //  ホームの「保有ポイント」から開く
 //  ・総ポイント（保有ポイント）と、うち宿泊・体験ポイント／普通のポイント
-//  ・もらい方・使い方
 //  ・獲得履歴（もらったポイント）と、使った履歴
 // ════════════════════════════════════════
 'use strict';
@@ -45,16 +44,6 @@
     nums.append(limited, normalBox);
     card.append(total, nums, el('p', 'points-card-note', '1pt＝1円として、桑都ペイでの支払いに使えます。'));
 
-    // ── もらい方・使い方 ──
-    const rules = el('section', 'stamp-section');
-    rules.append(el('h2', 'stamp-section-title', 'もらい方・使い方'));
-    const ruleList = el('dl', 'sheet-info points-rules');
-    ruleList.append(
-      el('dt', '', POINT_NAME), el('dd', '', `宿泊・体験の予約でもらえる（宿泊は1泊${RESERVE_POINTS.stay.amount.toLocaleString()}pt、体験は1名${RESERVE_POINTS.experience.amount.toLocaleString()}pt）。宿泊・体験のお店での支払いにだけ使える`),
-      el('dt', '', NORMAL_POINT_NAME), el('dd', '', `チャージでもらえる（チャージ額の${Math.round(CHARGE_POINT_RATE * 100)}%、1,000円で${Math.floor(1000 * CHARGE_POINT_RATE)}pt）。市内のどのお店でも使える`)
-    );
-    rules.append(ruleList);
-
     // ── 獲得履歴 ──
     const earned = [...pointData.history].filter((h) => h.amount > 0).reverse();
     const earnSection = el('section', 'stamp-section');
@@ -64,7 +53,7 @@
     earned.forEach((h) => earnList.append(createHistoryRow(h)));
     earnSection.append(earnList);
 
-    page.append(card, rules, earnSection);
+    page.append(card, earnSection);
 
     // ── 使った履歴 ──
     const used = [...pointData.history].filter((h) => h.amount < 0).reverse();

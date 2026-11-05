@@ -3691,10 +3691,6 @@ button.bill-row:active {
   opacity: 0.9;
 }
 
-.points-rules {
-  grid-template-columns: 130px 1fr;
-}
-
 .points-row-top {
   display: flex;
   align-items: center;
