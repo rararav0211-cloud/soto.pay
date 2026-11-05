@@ -10,7 +10,8 @@
   const page = document.querySelector('.points-page');
 
   // アカウントから開いたときは、戻るボタンをアカウントへ、下のナビを「アカウント」にする
-  if (new URLSearchParams(location.search).get('from') === 'account') {
+  const fromAccount = new URLSearchParams(location.search).get('from') === 'account';
+  if (fromAccount) {
     const back = document.querySelector('.back-btn');
     back.href = 'account.html';
     back.setAttribute('aria-label', 'アカウントに戻る');
@@ -64,9 +65,10 @@
     earnSection.append(earnList);
 
     // もらい方・使い方は、よくある質問へ
-    const help = el('a', 'tour-page-link points-help');
-    help.href = 'faq.html#points';
-    const helpText = el('span', 'tour-page-link-text');
+    const help = el('a', 'points-help');
+    // ホームから開いたときは、よくある質問でも下のナビを「ホーム」にする
+    help.href = fromAccount ? 'faq.html#points' : 'faq.html?from=home#points';
+    const helpText = el('span', 'points-help-text');
     helpText.append(el('strong', '', 'ポイントのもらい方・使い方'), el('span', '', 'よくある質問で見る'));
     help.append(helpText, el('span', 'pay-coupon-arrow', '›'));
 
