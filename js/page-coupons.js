@@ -2,7 +2,8 @@
 //  page-coupons.js … クーポン一覧（coupons.html）だけで使う処理
 //  ・すべてのクーポンを縦に並べる
 //  ・カテゴリ × 獲得状況 で絞り込む
-//  ・coupons.html?kind=tour のときは回遊クーポンだけにする（ホームの「スタンプラリー」から開く）
+//  ・回遊クーポンは、解放されたもの（今日解放した・今日使った）だけを出す
+//  ・coupons.html?kind=tour のときは回遊クーポンだけにする（ホームの「スタンプラリー」から開く。未解放もふくめて全部）
 // ════════════════════════════════════════
 'use strict';
 {
@@ -25,12 +26,21 @@
       if (tab.dataset.filter === 'acquired') tab.textContent = '解放済み';
     });
   }
-  const shownCoupons = tourOnly ? COUPONS.filter((coupon) => coupon.kind === 'tour') : COUPONS;
+  const tourCoupons = COUPONS.filter((coupon) => coupon.kind === 'tour');
+
+  // 並べるクーポン
+  //  回遊クーポンだけのページ … 回遊クーポンを全部（未解放もふくめて見渡せるように）
+  //  ふつうのクーポン一覧   … 通常クーポンと、解放された回遊クーポン（今日解放した・今日使った）だけ
+  //  解放の状態は支払いで変わるので、並べるたびに選び直す
+  function getShownCoupons() {
+    if (tourOnly) return tourCoupons;
+    return COUPONS.filter((coupon) => coupon.kind !== 'tour' || getStatus(coupon) !== 'locked');
+  }
 
   // ── クーポンを並べる ──
   function renderList() {
     list.querySelectorAll('.coupon-card').forEach((card) => card.remove());
-    shownCoupons.forEach((coupon) => list.insertBefore(createCouponCard(coupon, true), emptyText));
+    getShownCoupons().forEach((coupon) => list.insertBefore(createCouponCard(coupon, true), emptyText));
     applyFilter();
   }
 
@@ -54,7 +64,9 @@
 
   // カテゴリのボタン（先頭は「すべて」）
   // 回遊クーポンのページでは、回遊クーポンがあるカテゴリだけ出す
-  const categories = CATEGORIES.filter((category) => shownCoupons.some((coupon) => coupon.category === category.id));
+  const categories = tourOnly
+    ? CATEGORIES.filter((category) => tourCoupons.some((coupon) => coupon.category === category.id))
+    : CATEGORIES;
   [{ id: 'all', label: 'すべて' }, ...categories].forEach((category) => {
     const chip = el('button', category.id === 'all' ? 'category-chip active' : 'category-chip', category.label);
     chip.addEventListener('click', () => {
