@@ -2067,6 +2067,7 @@ a.reserve-btn {
 }
 /* お知らせ：特典 */
 .notice-item.is-reward .notice-icon { background: #C2185B; }
+.notice-item.is-deduct .notice-icon { background: #C62828; }
 
 /* お知らせの本文は改行をそのまま出す */
 .notice-text {
@@ -2906,4 +2907,98 @@ a.action-btn {
 
 .reservation-history .account-reservation .coupon-category {
   background: var(--green-pale);
+}
+
+/* ════════════════════════════
+   支払いでポイントを使う
+   （スイッチの見た目は「近い順」の .near-toggle を使っている）
+   ════════════════════════════ */
+.pay-point-toggle {
+  position: relative;
+  gap: 12px;
+  background: #E3F2FD;
+  border-color: #BBDEFB;
+}
+
+.pay-point-toggle:has(input:disabled) {
+  background: var(--gray-100);
+  border-color: var(--gray-200);
+  cursor: default;
+}
+
+.pay-point-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pay-point-sub {
+  font-size: 12px;
+  color: var(--gray-700);
+}
+
+.pay-point-toggle input:disabled + .near-toggle-switch {
+  opacity: 0.5;
+}
+
+/* 使うポイントの入力 */
+.pay-point-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pay-point-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.pay-point-input-row[hidden],
+.pay-point-hint[hidden] {
+  display: none;
+}
+
+.pay-point-amount {
+  flex: 1;
+  min-width: 0; /* 入力欄が横にはみ出さないように */
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--white);
+  border: 2px solid #1565C0;
+  border-radius: 12px;
+  cursor: text;
+}
+
+.pay-point-input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  text-align: right;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 22px; /* 16px 以上なので iPhone でも拡大されない */
+  font-weight: 900;
+  color: #1565C0;
+}
+
+.pay-point-all {
+  flex-shrink: 0;
+  padding: 0 14px;
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.pay-point-all.active {
+  background: #1565C0;
+  color: var(--white);
+}
+
+.pay-point-hint {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-700);
 }

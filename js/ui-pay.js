@@ -1,7 +1,7 @@
 // ════════════════════════════════════════
 //  ui-pay.js … 支払いの画面（どのページからも開ける）
 //  1. お店を選ぶ（お店のQRコードを読み取ったときは飛ばす）
-//  2. 金額を入れる（使えるクーポンは自動で割引）
+//  2. 金額を入れる（使えるクーポンは自動で割引・ポイントを使うかを選べる）
 //  3. 支払い完了（スタンプ・回遊クーポンのお知らせ）
 //  支払いの計算と記録は state.js の pay() が行う
 // ════════════════════════════════════════
@@ -10,12 +10,25 @@
 const PAY_PRESETS = [500, 1000, 3000, 5000]; // 金額をすぐ入れられるボタン
 const PAY_MAX = 100000;                      // 1回に払える上限（デモ用）
 
+// 入力された文字を、半角の数字だけにする（全角数字は半角に直す・先頭の0は消す・7けたまで）
+function toDigits(value) {
+  return value
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[^0-9]/g, '')
+    .replace(/^0+/, '')
+    .slice(0, 7);
+}
+
 // options.merchant … 最初からこのお店で払う（加盟店詳細・QRの読み取りから開いたとき）
 // options.area     … このエリアのお店だけを選べるようにする（回遊バナーから開いたとき）
 function openPay(options = {}) {
   let merchant = options.merchant || null;
   let amountText = '';
   let query = '';
+  // ポイント（お店を選び直しても覚えておく）
+  let usePoints = false;   // ポイントを使うか
+  let pointsText = '';     // 入力した使うポイント
+  let pointsAll = true;    // 「全部使う」か（入力欄に数字を入れると false）
 
   // ════════════════════════════
   //  1. お店を選ぶ
@@ -129,19 +142,110 @@ function openPay(options = {}) {
       return Number(amountText || 0);
     }
 
+    // ════════════════════════════
+    //  ポイントを使う（スイッチ ＋ 使うポイントの入力）
+    //  入力中にフォーカスが外れないよう、箱は1回だけ作って中の文字だけ書きかえる
+    // ════════════════════════════
+    const pointArea = el('div', 'pay-point-area');
+    const pointToggle = el('label', 'near-toggle pay-point-toggle');
+    const pointText = el('div', 'pay-point-text');
+    const pointSub = el('span', 'pay-point-sub');
+    pointText.append(el('span', 'near-toggle-text', 'ポイントを使う'), pointSub);
+    const pointCheck = el('input');
+    pointCheck.type = 'checkbox';
+    pointCheck.setAttribute('role', 'switch');
+    const knob = el('span', 'near-toggle-switch');
+    knob.setAttribute('aria-hidden', 'true');
+    pointToggle.append(pointText, pointCheck, knob);
+
+    // 使うポイントの入力欄
+    const pointInputRow = el('div', 'pay-point-input-row');
+    const pointBox = el('label', 'pay-point-amount');
+    const pointInput = el('input', 'pay-point-input');
+    pointInput.type = 'text';
+    pointInput.inputMode = 'numeric';
+    pointInput.autocomplete = 'off';
+    pointInput.placeholder = '0';
+    pointInput.setAttribute('aria-label', '使うポイント');
+    pointBox.append(pointInput, el('span', 'pay-amount-unit', 'pt'));
+    const allBtn = el('button', 'pay-preset pay-point-all', '全部使う');
+    allBtn.type = 'button';
+    const pointHint = el('p', 'pay-point-hint');
+    pointInputRow.append(pointBox, allBtn);
+    pointArea.append(pointToggle, pointInputRow, pointHint);
+
+    pointCheck.addEventListener('change', () => {
+      usePoints = pointCheck.checked;
+      if (usePoints) {
+        pointsAll = true; // オンにしたときは、まず使えるだけ使う
+        pointsText = '';
+      }
+      update();
+    });
+    pointInput.addEventListener('input', () => {
+      let digits = toDigits(pointInput.value);
+      // 使える数より多く入れたときは、使える数に直す（金額が入っているときだけ）
+      const max = getPaymentPreview(m, getAmount()).maxPoints;
+      if (getAmount() > 0 && Number(digits) > max) digits = String(max);
+      pointsText = digits;
+      pointsAll = false;
+      pointInput.value = digits;
+      update();
+    });
+    allBtn.addEventListener('click', () => {
+      pointsAll = true;
+      update();
+    });
+
+    // 使いたいポイント（「全部使う」のときは持っている分すべて）
+    function getWantedPoints() {
+      if (!usePoints) return 0;
+      return pointsAll ? pointData.balance : Number(pointsText || 0);
+    }
+
+    // ポイントの箱の表示を、いまの計算結果に合わせる
+    function updatePointBox(preview, amount) {
+      const has = pointData.balance > 0;
+      pointCheck.disabled = !has;
+      pointCheck.checked = usePoints && has;
+      pointSub.textContent = has
+        ? `保有 ${pointData.balance.toLocaleString()}pt（1pt＝1円）`
+        : '使えるポイントがありません';
+
+      const show = usePoints && has;
+      pointInputRow.hidden = !show;
+      pointHint.hidden = !show;
+      if (!show) return;
+
+      // 入力欄には「実際に使う数」を出す。入力した数（pointsText）は書きかえないので、
+      // お会計を減らして使える数が下がっても、お会計を戻せば入力した数に戻る
+      let shown = pointsText;
+      if (amount > 0 && (pointsAll || pointsText !== '')) shown = String(preview.pointsUsed);
+      if (pointInput.value !== shown) pointInput.value = shown;
+      allBtn.classList.toggle('active', amount > 0 && preview.pointsUsed === preview.maxPoints && preview.maxPoints > 0);
+
+      pointHint.textContent = amount > 0
+        ? `この支払いで使えるのは最大 ${preview.maxPoints.toLocaleString()}pt です。使ったあとの保有ポイント：${(pointData.balance - preview.pointsUsed).toLocaleString()}pt`
+        : '先にお会計の金額を入れてください';
+    }
+
     function update() {
       const amount = getAmount();
-      const preview = getPaymentPreview(m, amount);
+      const preview = getPaymentPreview(m, amount, getWantedPoints());
 
       // クーポンの案内
       couponArea.replaceChildren();
       const couponBox = createPayCouponBox(m, amount, update);
       if (couponBox) couponArea.append(couponBox);
 
+      // ポイント
+      updatePointBox(preview, amount);
+
       // 内訳
       summary.replaceChildren(
         el('dt', '', 'お会計'), el('dd', '', `${amount.toLocaleString()}円`),
         el('dt', '', 'クーポン'), el('dd', preview.discount ? 'pay-discount' : '', preview.discount ? `−${preview.discount.toLocaleString()}円` : 'なし'),
+        el('dt', '', 'ポイント'), el('dd', preview.pointsUsed ? 'pay-discount' : '', preview.pointsUsed ? `−${preview.pointsUsed.toLocaleString()}円（${preview.pointsUsed.toLocaleString()}pt）` : '使わない'),
         el('dt', '', 'お支払い'), el('dd', 'pay-total', `${preview.paid.toLocaleString()}円`),
         el('dt', '', '支払い後の残高'), el('dd', preview.enough ? '' : 'pay-short', `${preview.after.toLocaleString()}円`)
       );
@@ -164,28 +268,26 @@ function openPay(options = {}) {
 
       const ok = amount > 0 && amount <= PAY_MAX && preview.enough;
       submit.disabled = !ok;
-      submit.textContent = ok ? `${preview.paid.toLocaleString()}円を支払う` : '支払う';
+      if (!ok) submit.textContent = '支払う';
+      else if (preview.paid === 0) submit.textContent = 'ポイントだけで支払う';
+      else submit.textContent = `${preview.paid.toLocaleString()}円を支払う`;
     }
 
     // 数字以外は入らないようにする（全角数字は半角に直す）
     input.addEventListener('input', () => {
-      const digits = input.value
-        .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-        .replace(/[^0-9]/g, '')
-        .replace(/^0+/, '')
-        .slice(0, 7);
+      const digits = toDigits(input.value);
       amountText = digits;
       input.value = digits;
       update();
     });
 
     submit.addEventListener('click', () => {
-      const result = pay(m, getAmount());
+      const result = pay(m, getAmount(), getWantedPoints());
       if (result.ok) fillDone(result);
     });
 
     update();
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', '支払う'), shopHead, amountBox, presets, couponArea, summary, error, submit);
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', '支払う'), shopHead, amountBox, presets, couponArea, pointArea, summary, error, submit);
     if (!amountText) input.focus();
   }
 
@@ -205,6 +307,7 @@ function openPay(options = {}) {
       el('dt', '', 'お店'), el('dd', '', payment.name),
       el('dt', '', 'お会計'), el('dd', '', `${payment.amount.toLocaleString()}円`),
       el('dt', '', 'クーポン'), el('dd', '', result.coupon ? `${result.coupon.discount.toLocaleString()}円引き` : 'なし'),
+      el('dt', '', 'ポイント'), el('dd', '', payment.pointsUsed ? `${payment.pointsUsed.toLocaleString()}pt使用（残り ${pointData.balance.toLocaleString()}pt）` : '使わない'),
       el('dt', '', '残高'), el('dd', '', `${wallet.balance.toLocaleString()}円`),
       el('dt', '', '日時'), el('dd', '', formatDateTime(payment.at)),
       el('dt', '', '取引番号'), el('dd', '', payment.id)

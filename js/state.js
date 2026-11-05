@@ -44,10 +44,11 @@ const NOTICE_TYPES = {
   coupon:  { label: 'クーポン', icon: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>' },
   reward:  { label: '特典',     icon: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>' },
   reserve: { label: '予約',     icon: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' },
+  deduct:  { label: '差し引き', icon: '<path d="M12 5v14M19 12l-7 7-7-7"/>' },
 };
 
 // 残高が動いたお知らせの種類（取引履歴に出すもの）
-const MONEY_NOTICE_TYPES = ['payment', 'charge', 'reward'];
+const MONEY_NOTICE_TYPES = ['payment', 'charge', 'reward', 'deduct'];
 
 // [{ type, title, body, at, read }]（新しいものが先頭）
 const notices = load(KEYS.notices, []);
@@ -115,6 +116,15 @@ function addPoints(amount, label) {
   save(KEYS.points, pointData);
   updatePointDisplays();
   addNotice('points', `${amount.toLocaleString()}ptを獲得しました`, `${label}でポイントが付与されました。保有ポイント：${pointData.balance.toLocaleString()}pt`);
+}
+
+// ポイントを使う（支払い・予約のキャンセルで差し引く）。お知らせは呼び出した側で出す
+function usePointsFor(amount, label) {
+  if (amount <= 0) return;
+  pointData.balance -= amount;
+  pointData.history.push({ label, amount: -amount, at: Date.now() });
+  save(KEYS.points, pointData);
+  updatePointDisplays();
 }
 
 // 画面にある「保有ポイント」の数字をすべて書きかえる
@@ -275,21 +285,39 @@ function addReservation(shop, reservation) {
   addPoints(reservation.points, `${shop.name}の予約`);
 }
 
-// 予約をキャンセルする。もらったポイントは差し引く（保有ポイントより多くは引かない）
+// 予約をキャンセルしたときに差し引くもの
+//  予約でもらったポイントを差し引く。ポイントが足りないとき（支払いで使ったときなど）は、
+//  足りない分を残高から1pt＝1円で差し引く
+//  → { points: 差し引くポイント, yen: 残高から差し引く円, enough: 残高が足りるか }
+function getCancelCharge(r) {
+  const total = r.points || 0;
+  const points = Math.min(total, pointData.balance);
+  const yen = total - points;
+  return { points, yen, enough: yen <= wallet.balance };
+}
+
+// 予約をキャンセルする（残高が足りず差し引けないときはキャンセルしない）
 function cancelReservation(id) {
   const r = reservations.find((item) => item.id === id);
   if (!r || !isUpcomingReservation(r)) return false;
+  const charge = getCancelCharge(r);
+  if (!charge.enough) return false;
+
   r.canceledAt = Date.now();
   save(KEYS.reservations, reservations);
 
-  const minus = Math.min(r.points || 0, pointData.balance);
-  if (minus > 0) {
-    pointData.balance -= minus;
-    pointData.history.push({ label: `${r.shopName}の予約のキャンセル`, amount: -minus, at: Date.now() });
-    save(KEYS.points, pointData);
+  usePointsFor(charge.points, `${r.shopName}の予約のキャンセル`);
+  if (charge.yen > 0) {
+    wallet.balance -= charge.yen;
+    save(KEYS.wallet, wallet);
   }
   addNotice('reserve', '予約をキャンセルしました',
-    `${r.shopName}　${getReservationWhen(r)}・${r.people}名（予約番号 ${r.id}）${minus > 0 ? `\n予約でもらった${minus.toLocaleString()}ptを差し引きました。` : ''}`);
+    `${r.shopName}　${getReservationWhen(r)}・${r.people}名（予約番号 ${r.id}）${r.points ? `\n予約でもらった${r.points.toLocaleString()}ptを差し引きました。` : ''}`);
+  // 残高から差し引いたときは、取引履歴にも残す
+  if (charge.yen > 0) {
+    addNotice('deduct', '残高から差し引きました',
+      `${r.shopName}の予約のキャンセルで、保有ポイントが足りない${charge.yen.toLocaleString()}pt分を${charge.yen.toLocaleString()}円差し引きました。残高：${wallet.balance.toLocaleString()}円`);
+  }
   render();
   return true;
 }
@@ -345,25 +373,31 @@ save(KEYS.user, user);
 
 // 支払う前の計算（画面の「お支払い額」の表示にも使う）
 //  m … 加盟店（buildMerchants の1件） / amount … お会計の金額
-function getPaymentPreview(m, amount) {
+//  points … 使いたいポイント（1pt＝1円。クーポンで割り引いたあとの金額から引く）
+//            保有ポイントやお支払い額より多いときは、使える分だけ使う
+function getPaymentPreview(m, amount, points = 0) {
   const coupon = getUsableCoupon(m.coupon, amount);
   const discount = coupon ? Math.min(coupon.discount, amount) : 0;
-  const paid = amount - discount;
-  return { coupon, discount, paid, enough: paid <= wallet.balance, after: wallet.balance - paid };
+  const afterCoupon = amount - discount;
+  const maxPoints = Math.min(pointData.balance, afterCoupon); // この支払いで使える最大のポイント
+  const pointsUsed = Math.max(0, Math.min(Math.floor(points) || 0, maxPoints));
+  const paid = afterCoupon - pointsUsed;
+  return { coupon, discount, maxPoints, pointsUsed, paid, enough: paid <= wallet.balance, after: wallet.balance - paid };
 }
 
 // 支払う。結果を返す（失敗したら { ok: false, error }）
-function pay(m, amount) {
+function pay(m, amount, points = 0) {
   if (!Number.isInteger(amount) || amount <= 0) {
     return { ok: false, error: '金額を入力してください' };
   }
-  const preview = getPaymentPreview(m, amount);
+  const preview = getPaymentPreview(m, amount, points);
   if (!preview.enough) {
     return { ok: false, error: '残高が足りません' };
   }
 
-  // 1・2 クーポンを使って、残高を減らす
+  // 1・2 クーポン・ポイントを使って、残高を減らす
   if (preview.coupon) markCouponUsed(preview.coupon);
+  if (preview.pointsUsed > 0) usePointsFor(preview.pointsUsed, `${m.name}での支払い`);
   wallet.balance -= preview.paid;
   save(KEYS.wallet, wallet);
 
@@ -386,6 +420,7 @@ function pay(m, amount) {
     amount,
     discount: preview.discount,
     couponId: preview.coupon ? preview.coupon.id : null,
+    pointsUsed: preview.pointsUsed,
     paid: preview.paid,
     at: Date.now(),
   };
@@ -395,9 +430,16 @@ function pay(m, amount) {
   const extras = [];
   if (stamped) extras.push('スタンプが押されました。');
   if (unlocked) extras.push(`${TOUR_DESTINATION}の回遊クーポンが届きました。`);
-  const couponText = payment.discount ? `（クーポン${payment.discount.toLocaleString()}円引き）` : '';
+  const used = [];
+  if (payment.discount) used.push(`クーポン${payment.discount.toLocaleString()}円引き`);
+  if (payment.pointsUsed) used.push(`${payment.pointsUsed.toLocaleString()}pt使用`);
+  const couponText = used.length ? `（${used.join('・')}）` : '';
+  // ポイントだけで払ったときは「0円を支払いました」にならないようにする
+  const paidText = payment.paid === 0 && payment.pointsUsed
+    ? `${m.name}で${payment.pointsUsed.toLocaleString()}ptを使って支払いました${payment.discount ? `（クーポン${payment.discount.toLocaleString()}円引き）` : ''}`
+    : `${m.name}で${payment.paid.toLocaleString()}円を支払いました${couponText}`;
   addNotice('payment', '支払いが完了しました',
-    `${m.name}で${payment.paid.toLocaleString()}円を支払いました${couponText}。残高：${wallet.balance.toLocaleString()}円${extras.length ? `\n${extras.join('')}` : ''}`);
+    `${paidText}。残高：${wallet.balance.toLocaleString()}円${extras.length ? `\n${extras.join('')}` : ''}`);
 
   render();
   return { ok: true, payment, coupon: preview.coupon, stamped, unlocked };

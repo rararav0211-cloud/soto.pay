@@ -127,7 +127,7 @@ window.sotoPayDemo = {
   },
   payments() {
     console.table(payments.map((p) => ({
-      取引番号: p.id, お店: p.name, お会計: p.amount, 割引: p.discount, 支払い: p.paid,
+      取引番号: p.id, お店: p.name, お会計: p.amount, 割引: p.discount, ポイント: p.pointsUsed || 0, 支払い: p.paid,
       日時: new Date(p.at).toLocaleString('ja-JP'),
     })));
   },

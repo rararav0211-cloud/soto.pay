@@ -50,29 +50,48 @@ function openReservationCancel(r) {
     );
     sheet.append(...sheetTop(), el('h2', 'sheet-title', 'この予約をキャンセルしますか？'), info);
 
-    const minus = Math.min(r.points || 0, pointData.balance);
-    if (minus > 0) {
+    const charge = getCancelCharge(r);
+    if (charge.points > 0 || charge.yen > 0) {
       const warn = el('div', 'point-box is-warning');
-      warn.append(el('p', 'point-box-text', `この予約でもらった ${minus.toLocaleString()}pt は差し引かれます。`));
+      warn.append(el('p', 'point-box-text', `この予約でもらった ${r.points.toLocaleString()}pt は差し引かれます。`));
+      if (charge.yen > 0) {
+        warn.append(el('p', 'point-box-text',
+          `保有ポイントが${charge.yen.toLocaleString()}pt足りないため、その分の${charge.yen.toLocaleString()}円を残高から差し引きます。`));
+      }
       sheet.append(warn);
     }
 
     const ok = el('button', 'sheet-btn account-cancel-btn', 'キャンセルする');
     ok.addEventListener('click', () => {
-      if (cancelReservation(r.id)) fillDone(minus);
+      if (cancelReservation(r.id)) fillDone(charge);
     });
+    if (!charge.enough) {
+      // 残高も足りないときは、先にチャージしてもらう
+      ok.disabled = true;
+      const short = charge.yen - wallet.balance;
+      const error = el('div', 'pay-error');
+      const chargeBtn = el('button', 'tour-box-btn pay-charge-btn', 'チャージする');
+      chargeBtn.type = 'button';
+      chargeBtn.addEventListener('click', () => openCharge(() => openSheet(fillConfirm, false), short));
+      error.append(el('p', 'form-error', `キャンセルするには残高が${short.toLocaleString()}円足りません`), chargeBtn);
+      sheet.append(error);
+    }
     const back = el('button', 'sheet-link account-back', 'もどる');
     back.addEventListener('click', closeSheet);
     sheet.append(ok, back);
   }
 
-  function fillDone(minus) {
+  function fillDone(charge) {
     resetSheet('キャンセル完了');
     const closeBtn = el('button', 'sheet-btn', '閉じる');
     closeBtn.addEventListener('click', closeSheet);
+    const minusText = [
+      r.points ? `${r.points.toLocaleString()}ptを差し引きました。` : '',
+      charge.yen > 0 ? `（保有ポイントが足りない${charge.yen.toLocaleString()}pt分は、残高から${charge.yen.toLocaleString()}円を差し引きました）` : '',
+    ].join('');
     sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
       el('h2', 'sheet-title reserve-done-title', '予約をキャンセルしました'),
-      el('p', 'sheet-desc', `${r.shopName}（${getReservationWhen(r)}）の予約をキャンセルしました。${minus > 0 ? `${minus.toLocaleString()}ptを差し引きました。` : ''}`),
+      el('p', 'sheet-desc', `${r.shopName}（${getReservationWhen(r)}）の予約をキャンセルしました。${minusText}`),
       closeBtn);
   }
 
