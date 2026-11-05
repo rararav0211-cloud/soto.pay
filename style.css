@@ -3613,3 +3613,14 @@ button.bill-row:active {
 .bills-page .bill-note {
   margin: 16px 16px 0;
 }
+
+/* 公共料金の登録：デモアプリのため先に進めないことの説明 */
+.bill-demo-notice {
+  gap: 6px;
+}
+
+.bill-demo-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #8A3A00;
+}

@@ -1,7 +1,7 @@
 // ════════════════════════════════════════
 //  ui-bill.js … 公共料金・税金の引き落としの部品（bills.html で使う。アカウントから開く）
 //  ・一覧：引き落とし予定（日付・金額）と残高が足りないときの案内／登録できる公共料金／引き落とし済み
-//  ・登録：登録の確認 → 登録完了（下から出るパネル）
+//  ・登録：内容と「登録するとどうなるか」を見せ、デモアプリのため先に進めないことを説明する（下から出るパネル）
 //  引き落としそのものは state.js の processDueBills() が、引き落とし日に自動で行う
 //  ※ 公共料金・税金には、クーポンとポイントは使えない
 // ════════════════════════════════════════
@@ -106,23 +106,22 @@ function renderBills(box) {
 }
 
 // ════════════════════════════
-//  登録（登録の確認 → 登録完了）
+//  登録（デモアプリのため、ここから先には進めない）
+//  登録しようとしている公共料金の内容と、登録するとどうなるかを見せて、
+//  実際の登録はできないことを説明する
 // ════════════════════════════
 function openBillRegister(bill) {
-  function fillConfirm() {
+  function fill() {
     resetSheet('引き落としの登録');
     const head = el('div', 'pay-head');
     const headInfo = el('div', 'pay-shop-info');
     headInfo.append(el('p', 'pay-head-label', `請求元（${BILL_TYPES[bill.type].label}）`), el('p', 'pay-shop-name', bill.issuer));
     head.append(createBillIcon(bill), headInfo);
 
-    const due = new Date();
-    due.setDate(due.getDate() + bill.dueInDays);
     const info = el('dl', 'sheet-info pay-summary');
     info.append(
       el('dt', '', '内容'), el('dd', '', bill.title),
       el('dt', '', '次の請求'), el('dd', '', `${bill.amount.toLocaleString()}円`),
-      el('dt', '', '引き落とし日'), el('dd', '', formatDate(toDateString(due))),
       el('dt', '', '引き落とし先'), el('dd', '', '桑都ペイの残高')
     );
 
@@ -136,31 +135,18 @@ function openBillRegister(bill) {
     );
     howto.append(steps);
 
-    const ok = el('button', 'sheet-btn', 'この内容で登録する');
-    ok.addEventListener('click', () => {
-      registerBill(bill);
-      fillDone();
-    });
-    const back = el('button', 'sheet-link account-back', 'もどる');
-    back.addEventListener('click', closeSheet);
-
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', '引き落としを登録しますか？'), head, info, howto, ok, back);
-  }
-
-  function fillDone() {
-    resetSheet('引き落としの登録完了');
-    const info = el('dl', 'sheet-info');
-    info.append(
-      el('dt', '', '内容'), el('dd', '', `${bill.issuer}　${bill.title}`),
-      el('dt', '', '引き落とし日'), el('dd', '', formatDate(billData.due[bill.id])),
-      el('dt', '', '金額'), el('dd', '', `${bill.amount.toLocaleString()}円`),
-      el('dt', '', '今の残高'), el('dd', '', `${wallet.balance.toLocaleString()}円`)
+    // デモアプリのため、ここから先には進めないことの説明
+    const notice = el('div', 'point-box is-warning bill-demo-notice');
+    notice.append(
+      el('p', 'bill-demo-title', 'デモアプリのため、ここから先には進めません'),
+      el('p', 'point-box-text', '実際のサービスでは、このあと請求元のお客さま番号を入力し、請求元での確認が終わると引き落としが始まります。このデモアプリでは、実際の登録はできません。')
     );
+
     const closeBtn = el('button', 'sheet-btn', '閉じる');
     closeBtn.addEventListener('click', closeSheet);
-    sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
-      el('h2', 'sheet-title reserve-done-title', '引き落としを登録しました'), info, closeBtn);
+
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', '公共料金の引き落としを登録する'), head, info, howto, notice, closeBtn);
   }
 
-  openSheet(fillConfirm, false);
+  openSheet(fill, false);
 }
