@@ -34,7 +34,7 @@
     money.append(el('span', 'account-num-label', '使用可能金額'), el('strong', '', `${wallet.balance.toLocaleString()}円`));
     // 保有ポイント：押すとポイントの詳細（points.html）へ
     const points = el('a', 'account-num account-num-link');
-    points.href = 'points.html';
+    points.href = 'points.html?from=account';
     points.setAttribute('aria-label', `保有ポイント ${pointData.balance.toLocaleString()}pt。押すとポイントの詳細を見る`);
     const pointsHead = el('span', 'account-num-label account-num-head');
     pointsHead.append('保有ポイント', el('span', 'account-num-arrow', '›'));
@@ -90,7 +90,7 @@
   function renderMenu() {
     menu.replaceChildren(
       createMenuRow('取引履歴', '支払い・公共料金・チャージ・特典', () => openNotices('取引履歴', MONEY_NOTICE_TYPES)),
-      createMenuRow('ポイント', `保有 ${pointData.balance.toLocaleString()}pt（うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt）`, 'points.html'),
+      createMenuRow('ポイント', `保有 ${pointData.balance.toLocaleString()}pt（うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt）`, 'points.html?from=account'),
       createMenuRow('お知らせ', `未読 ${notices.filter((n) => !n.read).length}件`, () => openNotices()),
       createMenuRow('クーポン', `使えるクーポン ${getUsableCoupons().length}枚`, 'coupons.html'),
       createMenuRow('回遊クーポン', getUnlockedToday().length > 0 ? `今日解放 ${getUnlockedToday().length}枚` : '高尾山で使うとクーポンが開く', 'stamp.html')

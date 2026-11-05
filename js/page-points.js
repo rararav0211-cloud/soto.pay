@@ -1,12 +1,22 @@
 // ════════════════════════════════════════
 //  page-points.js … ポイント（points.html）だけで使う処理
-//  ホームの「保有ポイント」から開く
+//  ホームの「保有ポイント」から開く。アカウントから開いたときは points.html?from=account
+//  （戻るボタンと下のナビを、開いた元の画面に合わせる）
 //  ・総ポイント（保有ポイント）と、うち宿泊・体験ポイント／普通のポイント
 //  ・獲得履歴（もらったポイント）と、使った履歴
 // ════════════════════════════════════════
 'use strict';
 {
   const page = document.querySelector('.points-page');
+
+  // アカウントから開いたときは、戻るボタンをアカウントへ、下のナビを「アカウント」にする
+  if (new URLSearchParams(location.search).get('from') === 'account') {
+    const back = document.querySelector('.back-btn');
+    back.href = 'account.html';
+    back.setAttribute('aria-label', 'アカウントに戻る');
+    document.querySelector('.bottom-nav a[href="index.html"]').classList.remove('active');
+    document.querySelector('.bottom-nav .nav-account').classList.add('active');
+  }
 
   // 種類の名前（履歴のラベル）
   function getKindLabel(kind) {

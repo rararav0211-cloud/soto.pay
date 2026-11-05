@@ -96,8 +96,11 @@ function chargeWallet(amount) {
   wallet.balance += amount;
   save(KEYS.wallet, wallet);
   updateWalletDisplays();
-  addNotice('charge', 'チャージが完了しました', `${amount.toLocaleString()}円をチャージしました。残高：${wallet.balance.toLocaleString()}円`);
-  addPoints(Math.floor(amount * CHARGE_POINT_RATE), `${amount.toLocaleString()}円のチャージ`, 'normal');
+  // チャージでもらえる普通のポイント（お知らせはチャージのお知らせにまとめる）
+  const points = Math.floor(amount * CHARGE_POINT_RATE);
+  addPoints(points, `${amount.toLocaleString()}円のチャージ`, 'normal', false);
+  addNotice('charge', 'チャージが完了しました',
+    `${amount.toLocaleString()}円をチャージしました。残高：${wallet.balance.toLocaleString()}円${points > 0 ? `\n${NORMAL_POINT_NAME}を${points.toLocaleString()}pt獲得しました（どのお店でも使えます）。` : ''}`);
   render(); // 残高不足で止まっていた公共料金の引き落としなども、ここで進める
 }
 
@@ -126,14 +129,18 @@ function getNormalPoints() {
   return pointData.balance - pointData.limited;
 }
 
-// ポイントをもらう。kind … 'limited'（宿泊・体験ポイント）/ 'normal'（普通のポイント）
-function addPoints(amount, label, kind = 'limited') {
+// ポイントをもらう
+//  kind   … 'limited'（宿泊・体験ポイント）/ 'normal'（普通のポイント）。書き忘れないよう、必ず渡す
+//  notify … false ならお知らせを出さない（呼び出した側のお知らせにまとめるとき）
+function addPoints(amount, label, kind, notify = true) {
+  if (kind !== 'limited' && kind !== 'normal') throw new Error(`addPoints: kind は 'limited' か 'normal'（${kind}）`);
   if (amount <= 0) return;
   pointData.balance += amount;
   if (kind === 'limited') pointData.limited += amount;
   pointData.history.push({ label, amount, at: Date.now(), kind });
   save(KEYS.points, pointData);
   updatePointDisplays();
+  if (!notify) return;
   const name = kind === 'limited' ? POINT_NAME : NORMAL_POINT_NAME;
   const where = kind === 'limited' ? '宿泊・体験のお店での支払いに使えます' : '市内のどのお店でも使えます';
   addNotice('points', `${name}を${amount.toLocaleString()}pt獲得しました`, `${label}でポイントが付与されました。${where}。保有ポイント：${pointData.balance.toLocaleString()}pt`);
@@ -428,7 +435,7 @@ function addReservation(shop, reservation) {
   reservations.push(reservation);
   save(KEYS.reservations, reservations);
   addNotice('reserve', '予約が完了しました', `${shop.name}　${getReservationWhen(reservation)}・${reservation.people}名（予約番号 ${reservation.id}）`);
-  addPoints(reservation.points, `${shop.name}の予約`);
+  addPoints(reservation.points, `${shop.name}の予約`, 'limited');
 }
 
 // 予約をキャンセルしたときに差し引くもの

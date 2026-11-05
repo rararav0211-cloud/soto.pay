@@ -133,8 +133,10 @@ window.sotoPayDemo = {
     console.table(reservations);
   },
   points() {
-    console.log(`保有ポイント：${pointData.balance}pt`);
-    console.table(pointData.history.map((h) => ({ 内容: h.label, ポイント: h.amount, 日時: new Date(h.at).toLocaleString('ja-JP') })));
+    console.log(`保有ポイント：${pointData.balance}pt（うち${POINT_NAME} ${pointData.limited}pt・${NORMAL_POINT_NAME} ${getNormalPoints()}pt）`);
+    console.table(pointData.history.map((h) => ({
+      内容: h.label, 種類: h.kind === 'normal' ? NORMAL_POINT_NAME : POINT_NAME, ポイント: h.amount, 日時: new Date(h.at).toLocaleString('ja-JP'),
+    })));
   },
   dueToday() {
     getUpcomingBills().forEach(makeBillDueToday);
