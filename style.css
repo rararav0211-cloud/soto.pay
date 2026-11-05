@@ -129,6 +129,17 @@ body {
   font-weight: 700;
 }
 
+a.card-points {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-points-arrow {
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
 .card-points .points-value {
   font-size: 15px;
   font-weight: 900;
@@ -3717,4 +3728,22 @@ button.bill-row:active {
 
 .points-used .notice-list {
   margin-top: 12px;
+}
+
+/* アカウントの保有ポイント：押すとポイントの詳細へ */
+.account-num-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.account-num-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-num-arrow {
+  font-size: 16px;
+  font-weight: 900;
+  opacity: 1;
 }

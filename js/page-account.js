@@ -32,8 +32,13 @@
     const nums = el('div', 'account-nums');
     const money = el('div', 'account-num');
     money.append(el('span', 'account-num-label', '使用可能金額'), el('strong', '', `${wallet.balance.toLocaleString()}円`));
-    const points = el('div', 'account-num');
-    points.append(el('span', 'account-num-label', '保有ポイント'), el('strong', '', `${pointData.balance.toLocaleString()}pt`),
+    // 保有ポイント：押すとポイントの詳細（points.html）へ
+    const points = el('a', 'account-num account-num-link');
+    points.href = 'points.html';
+    points.setAttribute('aria-label', `保有ポイント ${pointData.balance.toLocaleString()}pt。押すとポイントの詳細を見る`);
+    const pointsHead = el('span', 'account-num-label account-num-head');
+    pointsHead.append('保有ポイント', el('span', 'account-num-arrow', '›'));
+    points.append(pointsHead, el('strong', '', `${pointData.balance.toLocaleString()}pt`),
       el('span', 'account-num-sub', `うち${POINT_NAME} ${pointData.limited.toLocaleString()}pt`));
     nums.append(money, points);
 
