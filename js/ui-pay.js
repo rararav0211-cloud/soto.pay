@@ -133,6 +133,7 @@ function openPay(options = {}) {
 
     // 金額を入れるたびに書きかわる部分
     const couponArea = el('div', 'pay-coupon-area');
+    const extendNote = el('div', 'pay-extend-note'); // 回遊クーポンの期限が延びるかの案内
     const summary = el('dl', 'sheet-info pay-summary');
     const error = el('div', 'pay-error');
     const submit = el('button', 'sheet-btn', '支払う');
@@ -237,6 +238,16 @@ function openPay(options = {}) {
       const couponBox = createPayCouponBox(m, amount, update);
       if (couponBox) couponArea.append(couponBox);
 
+      // 回遊クーポンの期限の延長（回遊クーポンを持っていて、まだ延ばしていないときだけ）
+      extendNote.replaceChildren();
+      extendNote.hidden = !canExtendTour();
+      if (canExtendTour()) {
+        extendNote.classList.toggle('is-ok', willExtendTour(amount));
+        extendNote.append(el('p', '', willExtendTour(amount)
+          ? '✓ この支払いで、回遊クーポンの期限が明日23:59まで延びます'
+          : `あと${(TOUR_EXTEND.minAmount - amount).toLocaleString()}円以上で、回遊クーポンの期限が明日23:59まで延びます（1回${TOUR_EXTEND.minAmount.toLocaleString()}円以上のお支払い）`));
+      }
+
       // ポイント
       updatePointBox(preview, amount);
 
@@ -286,7 +297,7 @@ function openPay(options = {}) {
     });
 
     update();
-    sheet.append(...sheetTop(), el('h2', 'sheet-title', '支払う'), shopHead, amountBox, presets, couponArea, pointArea, summary, error, submit);
+    sheet.append(...sheetTop(), el('h2', 'sheet-title', '支払う'), shopHead, amountBox, presets, couponArea, extendNote, pointArea, summary, error, submit);
     if (!amountText) input.focus();
   }
 
@@ -315,6 +326,16 @@ function openPay(options = {}) {
     sheet.append(...sheetTop(), el('div', 'reserve-check', '✓'),
       el('h2', 'sheet-title reserve-done-title', '支払いが完了しました'), total, info);
 
+    // 回遊クーポンの期限が延びたとき
+    if (result.extended) {
+      const box = el('div', 'tour-box');
+      const head = el('div', 'tour-box-head');
+      head.append(el('span', 'coupon-badge', '回遊'), el('p', 'tour-box-title', '回遊クーポンの期限が延びました'));
+      box.append(head, el('p', 'tour-box-text',
+        `${TOUR_EXTEND.minAmount.toLocaleString()}円以上のお支払いありがとうございます。回遊クーポンは${getTourExpiryText()}使えます。`));
+      sheet.append(box);
+    }
+
     // 次のお店の回遊クーポンが解放されたとき
     if (result.unlocked.length > 0) {
       const box = el('div', 'tour-box');
@@ -322,7 +343,7 @@ function openPay(options = {}) {
       head.append(el('span', 'coupon-badge', '回遊'), el('p', 'tour-box-title', `次のお店のクーポンが${result.unlocked.length}枚解放されました`));
       const link = el('a', 'tour-box-link', '解放されたクーポンを見る');
       link.href = 'stamp.html';
-      box.append(head, el('p', 'tour-box-text', 'どれかのお店で使うと、また次のクーポンが開きます。本日23:59まで。'),
+      box.append(head, el('p', 'tour-box-text', `どれかのお店で使うと、また次のクーポンが開きます。${getTourExpiryText()}。`),
         createCouponChips(result.unlocked), link);
       sheet.append(box);
     }
@@ -438,7 +459,7 @@ function openCouponPay() {
       if (coupon.kind === 'tour') labels.append(el('span', 'coupon-badge', '回遊'));
       labels.append(el('span', 'coupon-category', AREAS[merchant.area]));
       info.append(labels, el('p', 'pay-shop-name', merchant.name), el('p', 'pay-shop-genre', getConditionText(coupon)));
-      if (coupon.kind === 'tour' && !isStartCoupon(coupon)) info.append(el('p', 'coupon-note is-active', '本日23:59まで'));
+      if (coupon.kind === 'tour' && !isStartCoupon(coupon)) info.append(el('p', 'coupon-note is-active', getTourExpiryText()));
 
       row.append(discount, info, el('span', 'pay-coupon-arrow', '›'));
       row.addEventListener('click', () => openCouponUse(coupon));

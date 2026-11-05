@@ -3624,3 +3624,25 @@ button.bill-row:active {
   font-weight: 900;
   color: #8A3A00;
 }
+
+/* 支払い画面：回遊クーポンの期限が延びるかの案内 */
+.pay-extend-note {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #FFF7E6;
+  border: 1px dashed #E08A00;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #8A5300;
+}
+
+.pay-extend-note[hidden] {
+  display: none;
+}
+
+.pay-extend-note.is-ok {
+  background: #FFEFD1;
+  border-style: solid;
+  color: #B36B00;
+}
